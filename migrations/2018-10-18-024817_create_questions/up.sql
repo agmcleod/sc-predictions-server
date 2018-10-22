@@ -1,0 +1,7 @@
+-- Your SQL goes here
+CREATE TABLE questions (
+  id SERIAL PRIMARY KEY,
+  body TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  updated_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
