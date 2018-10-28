@@ -4,10 +4,17 @@ version = "0.1.0"
 authors = ["Aaron McLeod <aaron.g.mcleod@gmail.com>"]
 
 [dependencies]
+actix = "0.7.5"
 actix-web = "0.7.12"
-env_logger = "0.5.13"
-diesel = { version = "1.0.0", features = ["postgres", "chrono"] }
+chrono = { versiob = "0.4.6", features = ["serde"] }
 dotenv = "0.9.0"
+env_logger = "0.5.13"
+futures = "0.1"
+log = "0.4.0"
+postgres = { version = "0.15.1", features = ["with-chrono"] }
+postgres-mapper = { version = "0.1.0", features = ["postgres-support"]}
+postgres-mapper-derive = { version = "0.1.0", features = ["postgres-mapper", "postgres-support"]}
+r2d2 = "0.8.2"
+r2d2_postgres = "0.14.0"
 serde = "1.0.80"
 serde_derive = "1.0.80"
-chrono = { versiob = "0.4.6", features = ["serde"] }

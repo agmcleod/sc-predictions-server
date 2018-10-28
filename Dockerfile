@@ -7,7 +7,7 @@ RUN echo 'fn main() {}' > src/main.rs
 
 RUN cargo build
 
-RUN cargo install diesel_cli --no-default-features --features postgres
+RUN cargo install dbmigrate --features postgres_support
 
 # We need to touch our real main.rs file or else docker will use
 # the cached one.

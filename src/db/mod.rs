@@ -1,15 +1,11 @@
-use diesel::prelude::*;
-use diesel::pg::PgConnection;
-use dotenv::dotenv;
-use std::env;
+use actix::{Actor, SyncContext};
 
 pub mod models;
+pub mod pool;
+use self::pool::Pool;
 
-pub fn establish_connection() -> PgConnection {
-    dotenv().ok();
+pub struct DbExecutor(pub Pool);
 
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .expect(&format!("Error connecting to {}", database_url))
+impl Actor for DbExecutor {
+    type Context = SyncContext<Self>;
 }
