@@ -1,7 +1,7 @@
 use actix_web::{AsyncResponder, HttpRequest, HttpResponse, FutureResponse, Result, Error};
 use futures::Future;
 use actix::prelude::{Handler, Message};
-use db::{DbExecutor, models::Question};
+use db::{DbExecutor, models::Question, get_conn};
 use app::AppState;
 
 #[derive(Serialize)]
@@ -19,7 +19,7 @@ impl Handler<GetAllQuestions> for DbExecutor {
     type Result = Result<AllQuestions, Error>;
 
     fn handle(&mut self, _: GetAllQuestions, _: &mut Self::Context) -> Self::Result {
-        let connection = self.0.get_conn().unwrap();
+        let connection = get_conn(&self.0).unwrap();
 
         let results = Question::get_all(&connection)
             .expect("Error loading questions");

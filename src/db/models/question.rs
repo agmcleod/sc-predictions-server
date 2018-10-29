@@ -1,6 +1,6 @@
 use chrono::NaiveDateTime;
 
-use db::pool::PgConnection;
+use db::PgConnection;
 use postgres_mapper;
 
 #[derive(Serialize, Deserialize, PostgresMapper)]
