@@ -63,11 +63,13 @@ fn main() {
 }
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use actix_web::{http, HttpMessage, test::{TestServer}};
     use super::*;
 
-    fn test_welcome(srv: &mut TestServer) {
+    #[test]
+    fn test_welcome() {
+        let mut srv = get_server();
         let req = srv.get().finish().unwrap();
         let res = srv.execute(req.send()).unwrap();
         assert!(res.status().is_success());
@@ -77,24 +79,9 @@ mod tests {
         assert_eq!(body, "Welcome");
     }
 
-    fn test_questions(srv: &mut TestServer) {
-        let req = srv.client(http::Method::GET, "/api/questions").finish().unwrap();
-        let res = srv.execute(req.send()).map_err(|err| {
-            println!("{}", err);
-        }).unwrap();
-        assert!(res.status().is_success());
-
-        let bytes = srv.execute(res.body()).unwrap();
-        let body = std::str::from_utf8(&bytes).unwrap();
-        let response: routes::questions::AllQuestions = serde_json::from_str(body).unwrap();
-
-        assert!(response.questions.len() == 0);
-    }
-
-    #[test]
-    fn integration() {
+    pub fn get_server() -> TestServer {
         dotenv().ok();
-        let mut srv = TestServer::build_with_state(|| {
+        TestServer::build_with_state(|| {
             let database_url = env::var("DATABASE_URL")
                 .expect("DATABASE_URL must be set");
             let pool = new_pool(database_url);
@@ -106,9 +93,6 @@ mod tests {
             app
                 .resource("/api/questions", |r| r.method(http::Method::GET).f(routes::questions::get_all))
                 .resource("/", |r| r.method(http::Method::GET).f(app::index));
-        });
-
-        test_welcome(&mut srv);
-        test_questions(&mut srv);
+        })
     }
 }
