@@ -4,7 +4,7 @@ use actix::prelude::{Handler, Message};
 use db::{DbExecutor, models::Question, get_conn};
 use app::AppState;
 
-#[derive(Serialize)]
+#[derive(Deserialize, Serialize)]
 pub struct AllQuestions {
     pub questions: Vec<Question>,
 }

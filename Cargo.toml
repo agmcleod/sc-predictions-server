@@ -17,4 +17,5 @@ postgres-mapper-derive = { version = "0.1.0", features = ["postgres-mapper", "po
 r2d2 = "0.8.2"
 r2d2_postgres = "0.14.0"
 serde = "1.0.80"
+serde_json = "1.0.13"
 serde_derive = "1.0.80"

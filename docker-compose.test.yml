@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+  server_test:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: postgres://root@database_test/sc_predictions_test
+      DBMIGRATE_URL: postgres://root@database_test/sc_predictions_test
+      DBMIGRATE_PATH: ./migrations
+      RUST_BACKTRACE: 1
+    links:
+      - database_test
+    depends_on:
+      - database_test
+    stdin_open: true
+  database_test:
+    image: "postgres:10.5"
+    environment:
+      POSTGRES_USER: root
+      POSTGRES_PASSWORD: ''
+      POSTGRES_DB: sc_predictions_test
