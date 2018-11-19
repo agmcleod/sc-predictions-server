@@ -19,7 +19,6 @@ use std::env;
 use actix::{Addr, SyncArbiter, System};
 use actix_web::{server};
 use dotenv::dotenv;
-use r2d2_postgres::{PostgresConnectionManager, TlsMode};
 
 mod app;
 mod errors;
@@ -28,15 +27,6 @@ mod db;
 
 use app::create_app;
 use db::{DbExecutor};
-
-fn new_pool(database_url: String) -> r2d2::Pool<PostgresConnectionManager> {
-    let manager = PostgresConnectionManager::new(database_url, TlsMode::None).map_err(|err| {
-        error!("Failed to create db pool - {}", err.to_string());
-        errors::Error::DBError(errors::DBError::PGError(err))
-    }).unwrap();
-
-    r2d2::Pool::new(manager).unwrap()
-}
 
 fn main() {
     dotenv().ok();
@@ -48,7 +38,7 @@ fn main() {
 
     let sys = System::new("sc-predictions");
 
-    let pool = new_pool(database_url);
+    let pool = db::new_pool(database_url);
 
     // start arbiter with 4 threads
     // usage of move for the closure lets it take ownership of pool, before cloning it
@@ -84,7 +74,7 @@ pub mod tests {
         TestServer::build_with_state(|| {
             let database_url = env::var("DATABASE_URL")
                 .expect("DATABASE_URL must be set");
-            let pool = new_pool(database_url);
+            let pool = db::new_pool(database_url);
             let addr = SyncArbiter::start(4, move || DbExecutor(pool.clone()));
             app::AppState{db: addr}
         })

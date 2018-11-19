@@ -1,14 +1,14 @@
-use chrono::NaiveDateTime;
+use chrono::{DateTime, Utc};
 
 use db::PgConnection;
 use postgres_mapper;
 
-#[derive(Serialize, Deserialize, PostgresMapper)]
+#[derive(Debug, Serialize, Deserialize, PostgresMapper)]
 pub struct Question {
     pub id: i32,
     pub body: String,
-    pub created_at: NaiveDateTime,
-    pub updated_at: NaiveDateTime,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 impl Question {
