@@ -49,9 +49,9 @@ mod tests {
     use chrono::{Utc, TimeZone};
     use serde_json;
 
-    use db::{new_pool, get_conn};
+    use app_tests::{get_server, POOL};
+    use db::{get_conn};
 
-    use tests::get_server;
     use super::{AllQuestions};
 
     #[test]
@@ -74,14 +74,7 @@ mod tests {
 
     #[test]
     fn test_questions_populated() {
-        let mut srv = get_server();
-        use std::env;
-
-        let database_url = env::var("DATABASE_URL")
-            .expect("DATABASE_URL must be set");
-
-        let pool = new_pool(database_url);
-        let conn = get_conn(&pool).unwrap();
+        let conn = get_conn(&POOL).unwrap();
 
         conn.execute(
             "INSERT INTO questions (body, created_at, updated_at) VALUES ('This is the question', $1, $2)",
@@ -90,6 +83,8 @@ mod tests {
                 &Utc.ymd(2017, 12, 10).and_hms(0, 0, 0),
             ],
         ).unwrap();
+
+        let mut srv = get_server();
 
         let req = srv.client(http::Method::GET, "/api/questions").finish().unwrap();
         let res = srv.execute(req.send()).map_err(|err| {

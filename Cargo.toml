@@ -10,6 +10,7 @@ chrono = { versiob = "0.4.6", features = ["serde"] }
 dotenv = "0.9.0"
 env_logger = "0.5.13"
 futures = "0.1"
+lazy_static = "1.2.0"
 log = "0.4.0"
 postgres = { version = "0.15.1", features = ["with-chrono"] }
 postgres-mapper = { version = "0.1.0", features = ["postgres-support"]}

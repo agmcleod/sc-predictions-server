@@ -3,6 +3,7 @@ extern crate actix_web;
 extern crate chrono;
 extern crate futures;
 extern crate env_logger;
+#[macro_use] extern crate lazy_static;
 #[macro_use] extern crate log;
 extern crate serde;
 extern crate serde_json;
@@ -53,20 +54,21 @@ fn main() {
 }
 
 #[cfg(test)]
-pub mod tests {
+pub mod app_tests {
     use actix_web::{http, HttpMessage, test::{TestServer}};
     use super::*;
+    use dotenv::dotenv;
+    use std::env;
+    use r2d2::{Pool};
+    use r2d2_postgres::{PostgresConnectionManager};
 
-    #[test]
-    fn test_welcome() {
-        let mut srv = get_server();
-        let req = srv.get().finish().unwrap();
-        let res = srv.execute(req.send()).unwrap();
-        assert!(res.status().is_success());
-
-        let bytes = srv.execute(res.body()).unwrap();
-        let body = std::str::from_utf8(&bytes).unwrap();
-        assert_eq!(body, "Welcome");
+    lazy_static! {
+        pub static ref POOL: Pool<PostgresConnectionManager> = {
+            dotenv().ok();
+            let database_url = env::var("DATABASE_URL")
+                .expect("DATABASE_URL must be set");
+            db::new_pool(database_url)
+        };
     }
 
     pub fn get_server() -> TestServer {
@@ -81,8 +83,7 @@ pub mod tests {
         // register server handlers and start test server
         .start(|app| {
             app
-                .resource("/api/questions", |r| r.method(http::Method::GET).f(routes::questions::get_all))
-                .resource("/", |r| r.method(http::Method::GET).f(app::index));
+                .resource("/api/questions", |r| r.method(http::Method::GET).f(routes::questions::get_all));
         })
     }
 }
