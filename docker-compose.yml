@@ -12,6 +12,7 @@ services:
       DATABASE_URL: postgres://root@database/sc_predictions
       DBMIGRATE_URL: postgres://root@database/sc_predictions
       DBMIGRATE_PATH: ./migrations
+      CLIENT_HOST: http://localhost:3000
     links:
       - database
   database:
