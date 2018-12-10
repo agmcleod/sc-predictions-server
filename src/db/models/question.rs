@@ -15,6 +15,10 @@ impl Question {
     pub fn get_all(conn: &PgConnection) -> Result<Vec<Question>, postgres_mapper::Error> {
         use postgres_mapper::FromPostgresRow;
         let sql = "SELECT * FROM questions";
-        conn.query(sql, &[]).unwrap().into_iter().map(|row| Question::from_postgres_row(row)).collect::<Result<Vec<Question>, postgres_mapper::Error>>()
+        conn.query(sql, &[])
+            .unwrap()
+            .into_iter()
+            .map(|row| Question::from_postgres_row(row))
+            .collect::<Result<Vec<Question>, postgres_mapper::Error>>()
     }
 }

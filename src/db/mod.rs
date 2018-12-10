@@ -22,10 +22,12 @@ pub fn get_conn(pool: &Pool<PostgresConnectionManager>) -> Result<PgConnection, 
 }
 
 pub fn new_pool(database_url: String) -> Pool<PostgresConnectionManager> {
-    let manager = PostgresConnectionManager::new(database_url, TlsMode::None).map_err(|err| {
-        error!("Failed to create db pool - {}", err.to_string());
-        errors::Error::DBError(errors::DBError::PGError(err))
-    }).unwrap();
+    let manager = PostgresConnectionManager::new(database_url, TlsMode::None)
+        .map_err(|err| {
+            error!("Failed to create db pool - {}", err.to_string());
+            errors::Error::DBError(errors::DBError::PGError(err))
+        })
+        .unwrap();
 
     Pool::new(manager).unwrap()
 }

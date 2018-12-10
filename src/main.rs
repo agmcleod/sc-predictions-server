@@ -1,41 +1,52 @@
 extern crate actix;
 extern crate actix_web;
 extern crate chrono;
-extern crate futures;
 extern crate env_logger;
-#[macro_use] extern crate lazy_static;
-#[macro_use] extern crate log;
+extern crate futures;
+#[macro_use]
+extern crate lazy_static;
+#[macro_use]
+extern crate log;
+extern crate radix;
+extern crate rand;
 extern crate serde;
 extern crate serde_json;
-#[macro_use] extern crate serde_derive;
+#[macro_use]
+extern crate serde_derive;
 extern crate postgres;
 extern crate postgres_mapper;
-#[macro_use] extern crate postgres_mapper_derive;
+#[macro_use]
+extern crate postgres_mapper_derive;
 extern crate dotenv;
 extern crate r2d2;
 extern crate r2d2_postgres;
+extern crate uuid;
 
 use std::env;
 
 use actix::{Addr, SyncArbiter, System};
-use actix_web::{server};
+use actix_web::server;
 use dotenv::dotenv;
 
 mod app;
+mod db;
 mod errors;
 mod routes;
-mod db;
+mod utils;
 
 use app::create_app;
-use db::{DbExecutor};
+use db::DbExecutor;
 
 fn main() {
     dotenv().ok();
     env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
-    let database_url = env::var("DATABASE_URL")
-        .expect("DATABASE_URL must be set");
+    if let Ok(r) = radix::RadixNum::from_str("1234", 32) {
+        println!("{}", r.as_str());
+    }
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let sys = System::new("sc-predictions");
 
@@ -55,23 +66,23 @@ fn main() {
 
 #[cfg(test)]
 pub mod app_tests {
-    use actix_web::{http, HttpMessage, test::{TestServer}};
     use super::*;
+    use actix_web::{http, test::TestServer, HttpMessage};
     use dotenv::dotenv;
+    use r2d2::Pool;
+    use r2d2_postgres::PostgresConnectionManager;
     use std::env;
-    use r2d2::{Pool};
-    use r2d2_postgres::{PostgresConnectionManager};
 
     lazy_static! {
         pub static ref POOL: Pool<PostgresConnectionManager> = {
             dotenv().ok();
-            let database_url = env::var("DATABASE_URL")
-                .expect("DATABASE_URL must be set");
+            let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
             db::new_pool(database_url)
         };
     }
 
     pub fn get_server() -> TestServer {
+        env_logger::try_init();
         dotenv().ok();
         TestServer::build_with_state(|| {
             let database_url = env::var("DATABASE_URL")
@@ -83,7 +94,8 @@ pub mod app_tests {
         // register server handlers and start test server
         .start(|app| {
             app
-                .resource("/api/questions", |r| r.method(http::Method::GET).f(routes::questions::get_all));
+                .resource("/api/questions", |r| r.method(http::Method::GET).f(routes::questions::get_all))
+                .resource("/api/games", |r| r.method(http::Method::POST).f(routes::games::create));
         })
     }
 }

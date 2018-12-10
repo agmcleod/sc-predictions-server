@@ -1,5 +1,9 @@
 # Starcraft 2 predictions app
 
+This idea came from an activity we did at a Toronto PubCraft, where we make predictions for certain things between two players in a single game. We tracked it on paper, which works fine, but why not something you can access with your phone?
+
+I don't know if this is something I plan to finish. I'm not sure I want to worry about hosting it. Just a fun little thing for me to learn more about Rust in the web development arena.
+
 ## Running Migrations
 
 Using [https://github.com/Keats/dbmigrate](https://github.com/Keats/dbmigrate)
