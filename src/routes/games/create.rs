@@ -1,19 +1,13 @@
-use actix_web::{AsyncResponder, HttpRequest, HttpResponse, FutureResponse, Result, Error};
+use actix_web::{AsyncResponder, HttpMessage, HttpRequest, HttpResponse, FutureResponse, Result, Error};
 use actix::prelude::{Handler, Message};
 use futures::Future;
-use serde_json;
 
 use db::{DbExecutor, models::Game, get_conn};
 use app::AppState;
 
-#[derive(Deserialize)]
-pub struct GameQuestionIdPair {
-    pub game_id: i32,
-    pub question_id: i32,
-}
-
+#[derive(Deserialize, Serialize)]
 pub struct CreateGame {
-    join_ids: Vec<GameQuestionIdPair>,
+    question_ids: Vec<i32>,
 }
 
 impl Message for CreateGame {
@@ -36,14 +30,17 @@ impl Handler<CreateGame> for DbExecutor {
 }
 
 pub fn create(req: &HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    let game_questions: Vec<GameQuestionIdPair> = serde_json::from_str(&req.match_info()["game_questions"]).unwrap();
-    req.state()
-        .db
-        .send(CreateGame{ join_ids: game_questions })
+    req.json()
         .from_err()
-        .and_then(|res| match res {
-            Ok(game) => Ok(HttpResponse::Ok().json(game)),
-            Err(_) => Ok(HttpResponse::InternalServerError().into())
+        .and_then(|val: CreateGame| {
+            req.state()
+                .db
+                .send(val)
+                .from_err()
+                .and_then(|res| match res {
+                    Ok(game) => Ok(HttpResponse::Ok().json(game)),
+                    Err(_) => Ok(HttpResponse::InternalServerError().into())
+                })
         })
         .responder()
 }
@@ -59,11 +56,25 @@ mod tests {
     use app_tests::{get_server, POOL};
     use db::{get_conn, models::Game};
 
+    use super::{CreateGame};
+
     #[test]
     fn test_create_game() {
+        let conn = get_conn(&POOL).unwrap();
+
+        let rows = conn.query(
+            "INSERT INTO questions (body, created_at, updated_at) VALUES ('This is the question', $1, $2) RETURNING *",
+            &[
+                &Utc.ymd(2017, 12, 10).and_hms(0, 0, 0),
+                &Utc.ymd(2017, 12, 10).and_hms(0, 0, 0),
+            ],
+        ).unwrap();
+
+        let question_ids: Vec<i32> = rows.iter().map(|row| row.get(0)).collect();
+
         let mut srv = get_server();
         let req = srv.client(http::Method::POST, "/api/games")
-            .finish()
+            .json(CreateGame{ question_ids: question_ids.clone() })
             .unwrap();
         let res = srv.execute(req.send())
             .map_err(|err| {
@@ -81,5 +92,6 @@ mod tests {
         let conn = get_conn(&POOL).unwrap();
         let game = game.unwrap();
         conn.execute("DELETE FROM games WHERE id = $1", &[&game.id]).unwrap();
+        conn.execute("DELETE FROM questions WHERE id IN $1", &[&question_ids]).unwrap();
     }
 }

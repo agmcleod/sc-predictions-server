@@ -42,10 +42,6 @@ fn main() {
     env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
-    if let Ok(r) = radix::RadixNum::from_str("1234", 32) {
-        println!("{}", r.as_str());
-    }
-
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
 
     let sys = System::new("sc-predictions");
@@ -82,7 +78,9 @@ pub mod app_tests {
     }
 
     pub fn get_server() -> TestServer {
-        env_logger::try_init();
+        env_logger::try_init().map_err(|err| {
+            println!("Failed to init env logger {}", err);
+        }).unwrap();
         dotenv().ok();
         TestServer::build_with_state(|| {
             let database_url = env::var("DATABASE_URL")
