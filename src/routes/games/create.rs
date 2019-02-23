@@ -1,11 +1,12 @@
-use actix_web::{AsyncResponder, HttpMessage, HttpRequest, HttpResponse, FutureResponse, Result, Error};
 use actix::prelude::{Handler, Message};
+use actix_web::{
+    AsyncResponder, Error, Form, FutureResponse, HttpMessage, HttpRequest, HttpResponse, Result,
+};
 use futures::Future;
 
-use db::{DbExecutor, models::Game, get_conn};
 use app::AppState;
+use db::{get_conn, models::Game, DbExecutor};
 
-#[derive(Deserialize, Serialize)]
 pub struct CreateGame {
     question_ids: Vec<i32>,
 }
@@ -19,28 +20,37 @@ impl Handler<CreateGame> for DbExecutor {
 
     fn handle(&mut self, _: CreateGame, _: &mut Self::Context) -> Self::Result {
         let connection = get_conn(&self.0).unwrap();
-        let game = Game::create(&connection).map_err(|err| {
-            error!("Failed to create game - {}", err.to_string());
-            println!("Failed to create game - {}", err.to_string());
-        })
-        .unwrap();
+        let game = Game::create(&connection)
+            .map_err(|err| {
+                error!("Failed to create game - {}", err.to_string());
+                println!("Failed to create game - {}", err.to_string());
+            })
+            .unwrap();
 
         Ok(game)
     }
 }
 
-pub fn create(req: &HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    req.json()
+#[derive(Deserialize, Serialize)]
+pub struct CreateGameForm {
+    question_ids: Vec<i32>,
+}
+
+pub fn create(
+    (req, params): (HttpRequest<AppState>, Form<CreateGameForm>),
+) -> FutureResponse<HttpResponse> {
+    req.state()
+        .db
+        .send(CreateGame {
+            question_ids: params.question_ids.clone(),
+        })
         .from_err()
-        .and_then(|val: CreateGame| {
-            req.state()
-                .db
-                .send(val)
-                .from_err()
-                .and_then(|res| match res {
-                    Ok(game) => Ok(HttpResponse::Ok().json(game)),
-                    Err(_) => Ok(HttpResponse::InternalServerError().into())
-                })
+        .and_then(|res| match res {
+            Ok(game) => Ok(HttpResponse::Ok().json(game)),
+            Err(err) => {
+                println!("Err response {}", err);
+                Ok(HttpResponse::InternalServerError().into())
+            }
         })
         .responder()
 }
@@ -56,7 +66,7 @@ mod tests {
     use app_tests::{get_server, POOL};
     use db::{get_conn, models::Game};
 
-    use super::{CreateGame};
+    use super::CreateGameForm;
 
     #[test]
     fn test_create_game() {
@@ -73,14 +83,23 @@ mod tests {
         let question_ids: Vec<i32> = rows.iter().map(|row| row.get(0)).collect();
 
         let mut srv = get_server();
-        let req = srv.client(http::Method::POST, "/api/games")
-            .json(CreateGame{ question_ids: question_ids.clone() })
-            .unwrap();
-        let res = srv.execute(req.send())
+        let req = srv
+            .client(http::Method::POST, "/api/games")
+            .json(CreateGameForm {
+                question_ids: question_ids.clone(),
+            })
             .map_err(|err| {
-                println!("{}", err);
+                println!("Req error {:?}", err);
             })
             .unwrap();
+        let res = srv
+            .execute(req.send())
+            .map_err(|err| {
+                println!("Res error {:?}", err);
+            })
+            .unwrap();
+
+        println!("{:?}", res.status());
         assert!(res.status().is_success());
 
         let bytes = srv.execute(res.body()).unwrap();
@@ -91,7 +110,9 @@ mod tests {
 
         let conn = get_conn(&POOL).unwrap();
         let game = game.unwrap();
-        conn.execute("DELETE FROM games WHERE id = $1", &[&game.id]).unwrap();
-        conn.execute("DELETE FROM questions WHERE id IN $1", &[&question_ids]).unwrap();
+        conn.execute("DELETE FROM games WHERE id = $1", &[&game.id])
+            .unwrap();
+        conn.execute("DELETE FROM questions WHERE id IN $1", &[&question_ids])
+            .unwrap();
     }
 }

@@ -63,7 +63,7 @@ fn main() {
 #[cfg(test)]
 pub mod app_tests {
     use super::*;
-    use actix_web::{http, test::TestServer, HttpMessage};
+    use actix_web::{http, test::TestServer};
     use dotenv::dotenv;
     use r2d2::Pool;
     use r2d2_postgres::PostgresConnectionManager;
@@ -78,22 +78,23 @@ pub mod app_tests {
     }
 
     pub fn get_server() -> TestServer {
-        env_logger::try_init().map_err(|err| {
-            println!("Failed to init env logger {}", err);
-        }).unwrap();
+        match env_logger::try_init() {
+            Err(_) => println!("Failed to init env logger"),
+            _ => {}
+        }
         dotenv().ok();
         TestServer::build_with_state(|| {
-            let database_url = env::var("DATABASE_URL")
-                .expect("DATABASE_URL must be set");
+            let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
             let pool = db::new_pool(database_url);
             let addr = SyncArbiter::start(4, move || DbExecutor(pool.clone()));
-            app::AppState{db: addr}
+            app::AppState { db: addr }
         })
         // register server handlers and start test server
         .start(|app| {
-            app
-                .resource("/api/questions", |r| r.method(http::Method::GET).f(routes::questions::get_all))
-                .resource("/api/games", |r| r.method(http::Method::POST).f(routes::games::create));
+            app.resource("/api/questions", |r| {
+                r.method(http::Method::GET).f(routes::questions::get_all)
+            })
+            .resource("/api/games", |r| r.post().with(routes::games::create));
         })
     }
 }

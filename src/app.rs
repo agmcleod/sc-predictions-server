@@ -1,9 +1,11 @@
 use std::env;
 
 use actix::prelude::Addr;
-use actix_web::{http,
-                middleware::{cors, Logger},
-                App};
+use actix_web::{
+    http,
+    middleware::{cors, Logger},
+    App,
+};
 use db::DbExecutor;
 use routes::{games, questions};
 
@@ -24,7 +26,5 @@ pub fn create_app(db: Addr<DbExecutor>) -> App<AppState> {
         .resource("/api/questions", |r| {
             r.method(http::Method::GET).f(questions::get_all)
         })
-        .resource("/api/games", |r| {
-            r.method(http::Method::POST).f(games::create)
-        })
+        .resource("/api/games", |r| r.post().with(games::create))
 }
