@@ -1,5 +1,5 @@
 use actix::prelude::{Handler, Message};
-use actix_web::{AsyncResponder, Error, FutureResponse, HttpRequest, HttpResponse, Result};
+use actix_web::{error, AsyncResponder, Error, FutureResponse, HttpRequest, HttpResponse, Result};
 use futures::Future;
 
 use app::AppState;
@@ -23,9 +23,9 @@ impl Handler<GetAllQuestions> for DbExecutor {
     fn handle(&mut self, _: GetAllQuestions, _: &mut Self::Context) -> Self::Result {
         let connection = get_conn(&self.0).unwrap();
 
-        let results = Question::get_all(&connection).expect("Error loading questions");
-
-        Ok(AllQuestions { questions: results })
+        Ok(Question::get_all(&connection)
+            .map_err(|err| error::ErrorInternalServerError(err))
+            .and_then(|results| Ok(AllQuestions { questions: results }))?)
     }
 }
 
@@ -57,10 +57,12 @@ mod tests {
     #[test]
     fn test_questions_empty() {
         let mut srv = get_server();
-        let req = srv.client(http::Method::GET, "/api/questions")
+        let req = srv
+            .client(http::Method::GET, "/api/questions")
             .finish()
             .unwrap();
-        let res = srv.execute(req.send())
+        let res = srv
+            .execute(req.send())
             .map_err(|err| {
                 println!("{}", err);
             })
@@ -88,10 +90,12 @@ mod tests {
 
         let mut srv = get_server();
 
-        let req = srv.client(http::Method::GET, "/api/questions")
+        let req = srv
+            .client(http::Method::GET, "/api/questions")
             .finish()
             .unwrap();
-        let res = srv.execute(req.send())
+        let res = srv
+            .execute(req.send())
             .map_err(|err| {
                 println!("{}", err);
             })

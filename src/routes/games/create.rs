@@ -1,11 +1,16 @@
 use actix::prelude::{Handler, Message};
 use actix_web::{
-    AsyncResponder, Error, Form, FutureResponse, HttpMessage, HttpRequest, HttpResponse, Result,
+    error, AsyncResponder, Error, FutureResponse, HttpMessage, HttpRequest, HttpResponse, Json,
+    Result,
 };
 use futures::Future;
 
 use app::AppState;
-use db::{get_conn, models::Game, DbExecutor};
+use db::{
+    get_conn,
+    models::{Game, GameQuestion},
+    DbExecutor,
+};
 
 pub struct CreateGame {
     question_ids: Vec<i32>,
@@ -18,16 +23,22 @@ impl Message for CreateGame {
 impl Handler<CreateGame> for DbExecutor {
     type Result = Result<Game, Error>;
 
-    fn handle(&mut self, _: CreateGame, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, request: CreateGame, _: &mut Self::Context) -> Self::Result {
         let connection = get_conn(&self.0).unwrap();
-        let game = Game::create(&connection)
-            .map_err(|err| {
-                error!("Failed to create game - {}", err.to_string());
-                println!("Failed to create game - {}", err.to_string());
+        connection
+            .transaction()
+            .map_err(|err| error::ErrorInternalServerError(err))
+            .and_then(|transaction| {
+                Ok(Game::create(&transaction).and_then(|game| {
+                    for question_id in &request.question_ids {
+                        GameQuestion::create(&transaction, game.id, *question_id)?;
+                    }
+                    transaction
+                        .finish()
+                        .and_then(|()| Ok(game))
+                        .map_err(|err| error::ErrorInternalServerError(err))
+                })?)
             })
-            .unwrap();
-
-        Ok(game)
     }
 }
 
@@ -37,7 +48,7 @@ pub struct CreateGameForm {
 }
 
 pub fn create(
-    (req, params): (HttpRequest<AppState>, Form<CreateGameForm>),
+    (req, params): (HttpRequest<AppState>, Json<CreateGameForm>),
 ) -> FutureResponse<HttpResponse> {
     req.state()
         .db
@@ -47,10 +58,7 @@ pub fn create(
         .from_err()
         .and_then(|res| match res {
             Ok(game) => Ok(HttpResponse::Ok().json(game)),
-            Err(err) => {
-                println!("Err response {}", err);
-                Ok(HttpResponse::InternalServerError().into())
-            }
+            Err(_) => Ok(HttpResponse::InternalServerError().into()),
         })
         .responder()
 }
@@ -99,7 +107,6 @@ mod tests {
             })
             .unwrap();
 
-        println!("{:?}", res.status());
         assert!(res.status().is_success());
 
         let bytes = srv.execute(res.body()).unwrap();
@@ -110,9 +117,13 @@ mod tests {
 
         let conn = get_conn(&POOL).unwrap();
         let game = game.unwrap();
+        conn.execute("DELETE FROM game_questions", &[]).unwrap();
+
         conn.execute("DELETE FROM games WHERE id = $1", &[&game.id])
             .unwrap();
-        conn.execute("DELETE FROM questions WHERE id IN $1", &[&question_ids])
+
+        println!("Deleting questions {:?}", question_ids);
+        conn.execute("DELETE FROM questions WHERE id = ANY($1)", &[&question_ids])
             .unwrap();
     }
 }
