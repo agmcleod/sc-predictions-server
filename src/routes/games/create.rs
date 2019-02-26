@@ -25,7 +25,7 @@ impl Handler<CreateGame> for DbExecutor {
 
     fn handle(&mut self, request: CreateGame, _: &mut Self::Context) -> Self::Result {
         let connection = get_conn(&self.0).unwrap();
-        connection
+        let result = connection
             .transaction()
             .map_err(|err| error::ErrorInternalServerError(err))
             .and_then(|transaction| {
@@ -34,11 +34,13 @@ impl Handler<CreateGame> for DbExecutor {
                         GameQuestion::create(&transaction, game.id, *question_id)?;
                     }
                     transaction
-                        .finish()
+                        .commit()
                         .and_then(|()| Ok(game))
                         .map_err(|err| error::ErrorInternalServerError(err))
                 })?)
-            })
+            });
+
+        result
     }
 }
 
@@ -115,7 +117,9 @@ mod tests {
 
         assert!(game.is_ok());
 
-        let conn = get_conn(&POOL).unwrap();
+        let game_questions = conn.query("SELECT * FROM game_questions", &[]).unwrap();
+        assert_eq!(game_questions.len(), 1);
+
         let game = game.unwrap();
         conn.execute("DELETE FROM game_questions", &[]).unwrap();
 
