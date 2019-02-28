@@ -22,3 +22,11 @@ docker-compose exec server dbmigrate revert
 # see list of migrations and which one is currently applied
 docker-compose exec server dbmigrate status
 ```
+
+## Running tests
+
+```
+dockr test up # make sure test server is running
+make test_prepare
+make test
+```

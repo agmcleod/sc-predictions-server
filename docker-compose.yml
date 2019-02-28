@@ -25,3 +25,5 @@ services:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: ''
       POSTGRES_DB: sc_predictions
+    volumes:
+      - ./seeds:/seeds
