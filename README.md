@@ -30,3 +30,9 @@ dockr test up # make sure test server is running
 make test_prepare
 make test
 ```
+
+Can run tests by name via:
+
+```
+make test T=join_game
+```

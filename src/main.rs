@@ -94,7 +94,8 @@ pub mod app_tests {
             app.resource("/api/questions", |r| {
                 r.method(http::Method::GET).f(routes::questions::get_all)
             })
-            .resource("/api/games", |r| r.post().with(routes::games::create));
+            .resource("/api/games", |r| r.post().with(routes::games::create))
+            .resource("/api/games/join", |r| r.post().with(routes::games::join));
         })
     }
 }

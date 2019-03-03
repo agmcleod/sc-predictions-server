@@ -1,7 +1,6 @@
 use actix::prelude::{Handler, Message};
 use actix_web::{
-    error, AsyncResponder, Error, FutureResponse, HttpMessage, HttpRequest, HttpResponse, Json,
-    Result,
+    error, AsyncResponder, Error, FutureResponse, HttpRequest, HttpResponse, Json, Result,
 };
 use futures::Future;
 
@@ -12,18 +11,19 @@ use db::{
     DbExecutor,
 };
 
-pub struct CreateGame {
+#[derive(Clone, Deserialize, Serialize)]
+pub struct CreateGameRequest {
     question_ids: Vec<i32>,
 }
 
-impl Message for CreateGame {
+impl Message for CreateGameRequest {
     type Result = Result<Game, Error>;
 }
 
-impl Handler<CreateGame> for DbExecutor {
+impl Handler<CreateGameRequest> for DbExecutor {
     type Result = Result<Game, Error>;
 
-    fn handle(&mut self, request: CreateGame, _: &mut Self::Context) -> Self::Result {
+    fn handle(&mut self, request: CreateGameRequest, _: &mut Self::Context) -> Self::Result {
         let connection = get_conn(&self.0).unwrap();
         let result = connection
             .transaction()
@@ -44,23 +44,18 @@ impl Handler<CreateGame> for DbExecutor {
     }
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct CreateGameForm {
-    question_ids: Vec<i32>,
-}
-
 pub fn create(
-    (req, params): (HttpRequest<AppState>, Json<CreateGameForm>),
+    (req, params): (HttpRequest<AppState>, Json<CreateGameRequest>),
 ) -> FutureResponse<HttpResponse> {
     req.state()
         .db
-        .send(CreateGame {
-            question_ids: params.question_ids.clone(),
-        })
+        .send(params.0.clone())
         .from_err()
         .and_then(|res| match res {
             Ok(game) => Ok(HttpResponse::Ok().json(game)),
-            Err(_) => Ok(HttpResponse::InternalServerError().into()),
+            Err(err) => Ok(HttpResponse::InternalServerError()
+                .body(err.to_string())
+                .into()),
         })
         .responder()
 }
@@ -76,7 +71,7 @@ mod tests {
     use app_tests::{get_server, POOL};
     use db::{get_conn, models::Game};
 
-    use super::CreateGameForm;
+    use super::CreateGameRequest;
 
     #[test]
     fn test_create_game() {
@@ -95,7 +90,7 @@ mod tests {
         let mut srv = get_server();
         let req = srv
             .client(http::Method::POST, "/api/games")
-            .json(CreateGameForm {
+            .json(CreateGameRequest {
                 question_ids: question_ids.clone(),
             })
             .map_err(|err| {
@@ -126,7 +121,6 @@ mod tests {
         conn.execute("DELETE FROM games WHERE id = $1", &[&game.id])
             .unwrap();
 
-        println!("Deleting questions {:?}", question_ids);
         conn.execute("DELETE FROM questions WHERE id = ANY($1)", &[&question_ids])
             .unwrap();
     }

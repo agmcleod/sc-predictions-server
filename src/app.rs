@@ -27,4 +27,5 @@ pub fn create_app(db: Addr<DbExecutor>) -> App<AppState> {
             r.method(http::Method::GET).f(questions::get_all)
         })
         .resource("/api/games", |r| r.post().with(games::create))
+        .resource("/api/games/join", |r| r.post().with(games::join))
 }
