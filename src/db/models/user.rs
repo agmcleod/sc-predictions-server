@@ -8,7 +8,7 @@ use db::PgConnection;
 pub struct User {
     pub id: i32,
     pub game_id: i32,
-    pub name: String,
+    pub user_name: String,
     pub session_id: Uuid,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
@@ -17,7 +17,7 @@ pub struct User {
 impl User {
     pub fn create(connection: &PgConnection, name: String, game_id: i32) -> Result<User, Error> {
         use postgres_mapper::FromPostgresRow;
-        let sql = "INSERT INTO users (name, game_id) VALUES ($1, $2) RETURNING *";
+        let sql = "INSERT INTO users (user_name, game_id) VALUES ($1, $2) RETURNING *";
         connection
             .query(sql, &[&name, &game_id])
             .map_err(|err| error::ErrorInternalServerError(err))

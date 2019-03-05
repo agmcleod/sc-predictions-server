@@ -14,7 +14,7 @@ use db::{
 #[derive(Clone, Deserialize, Serialize)]
 pub struct JoinRequest {
     name: String,
-    game_slug: String,
+    slug: String,
 }
 
 impl Message for JoinRequest {
@@ -28,7 +28,7 @@ impl Handler<JoinRequest> for DbExecutor {
         use postgres_mapper::FromPostgresRow;
         let connection = get_conn(&self.0).unwrap();
         connection
-            .query("SELECT * FROM games WHERE slug = $1", &[&request.game_slug])
+            .query("SELECT * FROM games WHERE slug = $1", &[&request.slug])
             .map_err(|err| error::ErrorInternalServerError(err))
             .and_then(|rows| {
                 if rows.len() == 0 {
@@ -91,7 +91,7 @@ mod tests {
             .client(http::Method::POST, "/api/games/join")
             .json(JoinRequest {
                 name: "agmcleod".to_string(),
-                game_slug: game.slug,
+                slug: game.slug,
             })
             .unwrap();
 
@@ -118,7 +118,7 @@ mod tests {
             .client(http::Method::POST, "/api/games/join")
             .json(JoinRequest {
                 name: "agmcleod".to_string(),
-                game_slug: "null".to_string(),
+                slug: "null".to_string(),
             })
             .unwrap();
 
