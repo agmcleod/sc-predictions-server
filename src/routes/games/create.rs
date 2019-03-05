@@ -53,9 +53,7 @@ pub fn create(
         .from_err()
         .and_then(|res| match res {
             Ok(game) => Ok(HttpResponse::Ok().json(game)),
-            Err(err) => Ok(HttpResponse::InternalServerError()
-                .body(err.to_string())
-                .into()),
+            Err(err) => Ok(HttpResponse::from(err)),
         })
         .responder()
 }

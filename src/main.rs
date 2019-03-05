@@ -29,6 +29,7 @@ use actix_web::server;
 use dotenv::dotenv;
 
 mod app;
+mod auth_users;
 mod db;
 mod errors;
 mod routes;

@@ -31,11 +31,15 @@ impl Handler<JoinRequest> for DbExecutor {
             .query("SELECT * FROM games WHERE slug = $1", &[&request.game_slug])
             .map_err(|err| error::ErrorInternalServerError(err))
             .and_then(|rows| {
-                Game::from_postgres_row(rows.get(0))
-                    .map_err(|err| error::ErrorInternalServerError(err))
+                if rows.len() == 0 {
+                    Err(error::ErrorUnprocessableEntity("game not found"))
+                } else {
+                    Game::from_postgres_row(rows.get(0))
+                        .map_err(|err| error::ErrorInternalServerError(err))
+                        .and_then(|game| User::create(&connection, request.name, game.id))
+                        .map_err(|err| error::ErrorInternalServerError(err))
+                }
             })
-            .and_then(|game| User::create(&connection, request.name, game.id))
-            .map_err(|err| error::ErrorInternalServerError(err))
     }
 }
 
@@ -48,9 +52,7 @@ pub fn join(
         .from_err()
         .and_then(|res| match res {
             Ok(user) => Ok(HttpResponse::Ok().json(user)),
-            Err(err) => Ok(HttpResponse::InternalServerError()
-                .body(err.to_string())
-                .into()),
+            Err(err) => Ok(HttpResponse::from(err).into()),
         })
         .responder()
 }
@@ -107,5 +109,20 @@ mod tests {
 
         conn.execute("DELETE FROM users", &[]).unwrap();
         conn.execute("DELETE FROM games", &[]).unwrap();
+    }
+
+    #[test]
+    fn test_game_not_found() {
+        let mut srv = get_server();
+        let req = srv
+            .client(http::Method::POST, "/api/games/join")
+            .json(JoinRequest {
+                name: "agmcleod".to_string(),
+                game_slug: "null".to_string(),
+            })
+            .unwrap();
+
+        let res = srv.execute(req.send()).unwrap();
+        assert_eq!(res.status(), http::StatusCode::UNPROCESSABLE_ENTITY);
     }
 }

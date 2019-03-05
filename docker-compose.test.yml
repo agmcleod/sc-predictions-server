@@ -9,9 +9,7 @@ services:
       DATABASE_URL: postgres://root@database_test/sc_predictions_test
       DBMIGRATE_URL: postgres://root@database_test/sc_predictions_test
       DBMIGRATE_PATH: ./migrations
-      RUST_BACKTRACE: 1
       CLIENT_HOST: http://localhost:3000
-      RUST_BACKTRACE: full
       RUST_LOG: actix_web=debug
     links:
       - database_test

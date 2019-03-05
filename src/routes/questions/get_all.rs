@@ -36,7 +36,7 @@ pub fn get_all(req: &HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
         .from_err()
         .and_then(|res| match res {
             Ok(all_questions) => Ok(HttpResponse::Ok().json(all_questions)),
-            Err(_) => Ok(HttpResponse::InternalServerError().into()),
+            Err(err) => Ok(HttpResponse::from(err)),
         })
         .responder()
 }
