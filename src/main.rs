@@ -2,6 +2,8 @@ extern crate actix;
 extern crate actix_web;
 extern crate chrono;
 extern crate env_logger;
+#[macro_use]
+extern crate failure;
 extern crate futures;
 #[macro_use]
 extern crate lazy_static;
@@ -21,11 +23,14 @@ extern crate dotenv;
 extern crate r2d2;
 extern crate r2d2_postgres;
 extern crate uuid;
+extern crate validator;
+#[macro_use]
+extern crate validator_derive;
 
 use std::env;
 
 use actix::{Addr, SyncArbiter, System};
-use actix_web::server;
+use actix_web::{server, Error};
 use dotenv::dotenv;
 
 mod app;

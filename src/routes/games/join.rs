@@ -1,8 +1,9 @@
 use actix::prelude::{Handler, Message};
 use actix_web::{
-    error, AsyncResponder, Error, FutureResponse, HttpRequest, HttpResponse, Json, Result,
+    AsyncResponder, FutureResponse, HttpRequest, HttpResponse, Json, ResponseError, Result,
 };
 use futures::Future;
+use validator::Validate;
 
 use app::AppState;
 use db::{
@@ -10,10 +11,13 @@ use db::{
     models::{Game, User},
     DbExecutor,
 };
+use errors::{DBError, Error};
 
-#[derive(Clone, Deserialize, Serialize)]
+#[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct JoinRequest {
+    #[validate(length(min = "3"))]
     name: String,
+    #[validate(length(equal = "6"))]
     slug: String,
 }
 
@@ -29,15 +33,14 @@ impl Handler<JoinRequest> for DbExecutor {
         let connection = get_conn(&self.0).unwrap();
         connection
             .query("SELECT * FROM games WHERE slug = $1", &[&request.slug])
-            .map_err(|err| error::ErrorInternalServerError(err))
+            .map_err(|err| Error::DBError(DBError::PGError(err)))
             .and_then(|rows| {
                 if rows.len() == 0 {
-                    Err(error::ErrorUnprocessableEntity("game not found"))
+                    Err(Error::DBError(DBError::NoRecord))
                 } else {
                     Game::from_postgres_row(rows.get(0))
-                        .map_err(|err| error::ErrorInternalServerError(err))
+                        .map_err(|err| Error::DBError(DBError::MapError(err.to_string())))
                         .and_then(|game| User::create(&connection, request.name, game.id))
-                        .map_err(|err| error::ErrorInternalServerError(err))
                 }
             })
     }
@@ -46,15 +49,21 @@ impl Handler<JoinRequest> for DbExecutor {
 pub fn join(
     (req, params): (HttpRequest<AppState>, Json<JoinRequest>),
 ) -> FutureResponse<HttpResponse> {
-    req.state()
-        .db
-        .send(params.0.clone())
-        .from_err()
-        .and_then(|res| match res {
-            Ok(user) => Ok(HttpResponse::Ok().json(user)),
-            Err(err) => Ok(HttpResponse::from(err).into()),
-        })
-        .responder()
+    match params.validate() {
+        Ok(_) => req
+            .state()
+            .db
+            .send(params.0.clone())
+            .from_err()
+            .and_then(|res| match res {
+                Ok(user) => Ok(HttpResponse::Ok().json(user)),
+                Err(err) => Ok(err.error_response()),
+            })
+            .responder(),
+        Err(e) => Box::new(futures::future::ok(
+            Error::ValidationError(e).error_response(),
+        )),
+    }
 }
 
 #[cfg(test)]

@@ -1,8 +1,8 @@
-use actix_web::{error, Error};
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use db::PgConnection;
+use errors::{DBError, Error};
 
 #[derive(Debug, Serialize, Deserialize, PostgresMapper)]
 pub struct User {
@@ -20,10 +20,10 @@ impl User {
         let sql = "INSERT INTO users (user_name, game_id) VALUES ($1, $2) RETURNING *";
         connection
             .query(sql, &[&name, &game_id])
-            .map_err(|err| error::ErrorInternalServerError(err))
+            .map_err(|err| Error::DBError(DBError::PGError(err)))
             .and_then(|rows| {
                 User::from_postgres_row(rows.get(0))
-                    .map_err(|err| error::ErrorInternalServerError(err))
+                    .map_err(|err| Error::DBError(DBError::MapError(err.to_string())))
             })
     }
 }
