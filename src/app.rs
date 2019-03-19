@@ -2,11 +2,13 @@ use std::env;
 
 use actix::prelude::Addr;
 use actix_web::{
+    error::{self, ResponseError},
     http,
     middleware::{cors, Logger},
     App,
 };
 use db::DbExecutor;
+use errors;
 use routes::{games, questions};
 
 pub struct AppState {
@@ -27,5 +29,15 @@ pub fn create_app(db: Addr<DbExecutor>) -> App<AppState> {
             r.method(http::Method::GET).f(questions::get_all)
         })
         .resource("/api/games", |r| r.post().with(games::create))
-        .resource("/api/games/join", |r| r.post().with(games::join))
+        .resource("/api/games/join", |r| {
+            r.post().with_config(games::join, |cfg| {
+                (cfg.0).1.error_handler(|err, _| {
+                    error::InternalError::from_response(
+                        err,
+                        errors::Error::JsonPayload(err).error_response(),
+                    )
+                    .into()
+                });
+            })
+        })
 }
