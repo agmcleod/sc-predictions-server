@@ -6,4 +6,4 @@ CREATE TABLE game_questions (
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-SELECT manage_updated_at('game_questions');
+SELECT diesel_manage_updated_at('game_questions');

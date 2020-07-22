@@ -1,4 +1,4 @@
--- Your SQL goes here
+-- Your SQL goes here-- Your SQL goes here
 CREATE TABLE questions (
   id SERIAL PRIMARY KEY,
   body TEXT NOT NULL,
@@ -6,4 +6,4 @@ CREATE TABLE questions (
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-SELECT manage_updated_at('questions');
+SELECT diesel_manage_updated_at('questions');

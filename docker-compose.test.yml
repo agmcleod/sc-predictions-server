@@ -7,8 +7,6 @@ services:
       - .:/app
     environment:
       DATABASE_URL: postgres://root@database_test/sc_predictions_test
-      DBMIGRATE_URL: postgres://root@database_test/sc_predictions_test
-      DBMIGRATE_PATH: ./migrations
       CLIENT_HOST: http://localhost:3000
       RUST_LOG: actix_web=debug
     links:
@@ -17,7 +15,7 @@ services:
       - database_test
     stdin_open: true
   database_test:
-    image: "postgres:10.5"
+    image: 'postgres:10.5'
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: ''
