@@ -30,9 +30,7 @@ async fn main() -> std::io::Result<()> {
     env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-
-    let pool = db::new_pool(database_url);
+    let pool = db::new_pool();
 
     HttpServer::new(move || {
         let cors = Cors::new()

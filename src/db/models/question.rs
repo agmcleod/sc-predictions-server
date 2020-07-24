@@ -1,6 +1,5 @@
-use actix_web::{Error};
 use chrono::{DateTime, Utc};
-use diesel::PgConnection;
+use diesel::{result::Error, PgConnection, QueryDsl, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Queryable)]
@@ -13,7 +12,7 @@ pub struct Question {
 
 impl Question {
     pub fn get_all(conn: &PgConnection) -> Result<Vec<Question>, Error> {
-        use crate::schema::questions::dsl::{questions, body};
+        use crate::schema::questions::dsl::{body, questions};
 
         questions.order(body).load::<Question>(conn)
     }

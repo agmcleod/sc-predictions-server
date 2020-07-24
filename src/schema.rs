@@ -1,8 +1,8 @@
 table! {
     game_questions (id) {
         id -> Int4,
-        game_id -> Nullable<Int4>,
-        question_id -> Nullable<Int4>,
+        game_id -> Int4,
+        question_id -> Int4,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
     }

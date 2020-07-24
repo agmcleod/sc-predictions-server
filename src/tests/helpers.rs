@@ -1,42 +1,40 @@
 #[cfg(test)]
 pub mod tests {
-    use std::env;
 
     use actix_web::{dev::ServiceResponse, test, App};
-    use dotenv::dotenv;
-    use lazy_static::lazy_static;
-    use r2d2::Pool;
-    use r2d2_postgres::PostgresConnectionManager;
-    use serde::Serialize;
+    use serde::{de::DeserializeOwned, Serialize};
+    use serde_json;
 
     use crate::db;
     use crate::routes::routes;
 
-    lazy_static! {
-        pub static ref POOL: Pool<PostgresConnectionManager> = {
-            dotenv().ok();
-            let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-            db::new_pool(database_url)
-        };
-    }
-
     /// Helper for HTTP GET integration tests
     pub async fn test_get(route: &str) -> ServiceResponse {
-        let mut app = test::init_service(App::new().data(POOL.clone()).configure(routes)).await;
+        let mut app = test::init_service(App::new().data(db::new_pool()).configure(routes)).await;
 
         test::call_service(&mut app, test::TestRequest::get().uri(route).to_request()).await
     }
 
     /// Helper for HTTP POST integration tests
-    pub async fn test_post<T: Serialize>(route: &str, params: T) -> ServiceResponse {
-        let mut app = test::init_service(App::new().data(POOL.clone()).configure(routes)).await;
-        test::call_service(
+    pub async fn test_post<T: Serialize, R>(route: &str, params: T) -> (u16, R)
+    where
+        R: DeserializeOwned,
+    {
+        let mut app = test::init_service(App::new().data(db::new_pool()).configure(routes)).await;
+        let res = test::call_service(
             &mut app,
             test::TestRequest::post()
                 .set_json(&params)
                 .uri(route)
                 .to_request(),
         )
-        .await
+        .await;
+
+        let status = res.status().as_u16();
+        let body = test::read_body(res).await;
+        let json_body = serde_json::from_slice(&body)
+            .unwrap_or_else(|_| panic!("read_response_json failed during deserialization"));
+
+        (status, json_body)
     }
 }

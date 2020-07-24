@@ -16,7 +16,7 @@ pub struct CreateGameRequest {
 pub async fn create(
     pool: web::Data<PgPool>,
     params: web::Json<CreateGameRequest>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, actix_web::Error> {
     use diesel::connection::Connection;
 
     let connection = get_conn(&pool).unwrap();
@@ -31,62 +31,61 @@ pub async fn create(
 
             Ok(game)
         })
-        .and_then(|game| Ok(HttpResponse::Ok().json(game)))
         .map_err(|err| error::ErrorInternalServerError(err))
+        .and_then(|game| Ok(HttpResponse::Ok().json(game)))
 }
 
 #[cfg(test)]
 mod tests {
-    use std;
+    use diesel::{self, ExpressionMethods, QueryDsl, RunQueryDsl};
 
-    use actix_web::http;
-    use chrono::{TimeZone, Utc};
-    use serde_json;
-
-    use crate::db::{get_conn, models::Game};
-    use crate::tests::helpers::tests::{test_post, POOL};
+    use crate::db::{
+        get_conn,
+        models::{Game, Question},
+        new_pool,
+    };
+    use crate::schema::{game_questions, games, questions};
+    use crate::tests::helpers::tests::test_post;
 
     use super::CreateGameRequest;
 
     #[actix_rt::test]
     async fn test_create_game() {
-        let conn = get_conn(&POOL).unwrap();
-        let rows = conn.query(
-            "INSERT INTO questions (body, created_at, updated_at) VALUES ('This is the question', $1, $2) RETURNING *",
-            &[
-                &Utc.ymd(2017, 12, 10).and_hms(0, 0, 0),
-                &Utc.ymd(2017, 12, 10).and_hms(0, 0, 0),
-            ],
-        ).unwrap();
-
-        let question_ids: Vec<i32> = rows.iter().map(|row| row.get(0)).collect();
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+        let body = "This is the question".to_string();
+        let question = diesel::insert_into(questions::table)
+            .values(questions::dsl::body.eq("This is the equestion"))
+            .get_result::<Question>(&conn)
+            .unwrap();
 
         let res = test_post(
             "/api/games",
             CreateGameRequest {
-                question_ids: question_ids.clone(),
+                question_ids: vec![question.id],
             },
         )
         .await;
 
-        assert!(res.status().is_success());
+        assert_eq!(res.0, 200);
 
-        let bytes = srv.execute(res.body()).unwrap();
-        let body = std::str::from_utf8(&bytes).unwrap();
-        let game: serde_json::Result<Game> = serde_json::from_str(body);
+        let game: Game = res.1;
 
-        assert!(game.is_ok());
-
-        let game_questions = conn.query("SELECT * FROM game_questions", &[]).unwrap();
-        assert_eq!(game_questions.len(), 1);
-
-        let game = game.unwrap();
-        conn.execute("DELETE FROM game_questions", &[]).unwrap();
-
-        conn.execute("DELETE FROM games WHERE id = $1", &[&game.id])
+        let gqs = game_questions::dsl::game_questions
+            .select(game_questions::dsl::id)
+            .load::<i32>(&conn)
             .unwrap();
 
-        conn.execute("DELETE FROM questions WHERE id = ANY($1)", &[&question_ids])
+        assert_eq!(gqs.len(), 1);
+
+        diesel::delete(game_questions::dsl::game_questions)
+            .execute(&conn)
+            .unwrap();
+        diesel::delete(games::dsl::games.filter(games::dsl::id.eq(game.id)))
+            .execute(&conn)
+            .unwrap();
+        diesel::delete(questions::dsl::questions.filter(questions::dsl::id.eq_any(gqs)))
+            .execute(&conn)
             .unwrap();
     }
 }
