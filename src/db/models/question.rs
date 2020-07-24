@@ -1,9 +1,9 @@
-use actix_web::{error, Error};
+use actix_web::{Error};
 use chrono::{DateTime, Utc};
+use diesel::PgConnection;
+use serde::{Deserialize, Serialize};
 
-use db::PgConnection;
-
-#[derive(Debug, Serialize, Deserialize, PostgresMapper)]
+#[derive(Debug, Serialize, Deserialize, Queryable)]
 pub struct Question {
     pub id: i32,
     pub body: String,
@@ -13,14 +13,8 @@ pub struct Question {
 
 impl Question {
     pub fn get_all(conn: &PgConnection) -> Result<Vec<Question>, Error> {
-        use postgres_mapper::FromPostgresRow;
-        let sql = "SELECT * FROM questions";
-        conn.query(sql, &[])
-            .unwrap()
-            .into_iter()
-            .map(|row| {
-                Question::from_postgres_row(row).map_err(|err| error::ErrorInternalServerError(err))
-            })
-            .collect::<Result<Vec<Question>, Error>>()
+        use crate::schema::questions::dsl::{questions, body};
+
+        questions.order(body).load::<Question>(conn)
     }
 }

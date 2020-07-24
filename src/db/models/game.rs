@@ -1,11 +1,12 @@
-use actix_web::{error, Error};
 use chrono::{DateTime, Utc};
-use postgres::transaction::Transaction;
+use diesel::{self, result, RunQueryDsl};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use utils::create_slug_from_id;
+use crate::db::PgConnection;
+use crate::utils::create_slug_from_id;
 
-#[derive(Debug, Serialize, Deserialize, PostgresMapper)]
+#[derive(Debug, Serialize, Deserialize, Queryable)]
 pub struct Game {
     pub id: i32,
     pub creator: Uuid,
@@ -16,21 +17,24 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn create(transaction: &Transaction) -> Result<Game, Error> {
-        use postgres_mapper::FromPostgresRow;
-        let sql = "INSERT INTO games (id) VALUES(default) RETURNING *";
-        transaction
-            .query(sql, &[])
-            .and_then(|rows| {
-                let id: i32 = rows.get(0).get("id");
-                let slug = create_slug_from_id(id);
-                let sql = "UPDATE games SET slug = $1 WHERE id = $2 RETURNING *";
-                transaction.query(sql, &[&slug, &id])
-            })
-            .map_err(|err| error::ErrorInternalServerError(err))
-            .and_then(|rows| {
-                Game::from_postgres_row(rows.get(0))
-                    .map_err(|err| error::ErrorInternalServerError(err))
-            })
+    pub fn create(conn: &PgConnection) -> Result<Game, result::Error> {
+        use crate::schema::games::{
+            dsl::{games, slug},
+            table,
+        };
+
+        let game: Game = diesel::insert_into(table)
+            .default_values()
+            .get_result(conn)?;
+        let new_slug = create_slug_from_id(game.id);
+        diesel::update(games::dsl::games.find(game.id))
+            .set(slug.eq(new_slug))
+            .get_result::<Game>(conn)
+    }
+
+    pub fn find_by_slug(conn: &PgConnection, slug_value: String) -> Result<Game, result::Error> {
+        use crate::schema::games::dsl::{games, slug};
+
+        games.filter(slug.eq(slug_value)).first::<Game>(conn)?
     }
 }

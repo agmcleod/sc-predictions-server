@@ -1,14 +1,11 @@
-use actix::prelude::{Handler, Message};
-use actix_web::{
-    error, AsyncResponder, Error, FutureResponse, HttpRequest, HttpResponse, Json, Result,
-};
-use futures::Future;
+use actix_web::{error, web, HttpResponse, Result};
+use diesel::result::Error;
+use serde::{Deserialize, Serialize};
 
-use app::AppState;
-use db::{
+use crate::db::{
     get_conn,
     models::{Game, GameQuestion},
-    DbExecutor,
+    PgPool,
 };
 
 #[derive(Clone, Deserialize, Serialize)]
@@ -16,65 +13,44 @@ pub struct CreateGameRequest {
     question_ids: Vec<i32>,
 }
 
-impl Message for CreateGameRequest {
-    type Result = Result<Game, Error>;
-}
+pub async fn create(
+    pool: web::Data<PgPool>,
+    params: web::Json<CreateGameRequest>,
+) -> Result<HttpResponse, Error> {
+    use diesel::connection::Connection;
 
-impl Handler<CreateGameRequest> for DbExecutor {
-    type Result = Result<Game, Error>;
+    let connection = get_conn(&pool).unwrap();
 
-    fn handle(&mut self, request: CreateGameRequest, _: &mut Self::Context) -> Self::Result {
-        let connection = get_conn(&self.0).unwrap();
-        let result = connection
-            .transaction()
-            .map_err(|err| error::ErrorInternalServerError(err))
-            .and_then(|transaction| {
-                Ok(Game::create(&transaction).and_then(|game| {
-                    for question_id in &request.question_ids {
-                        GameQuestion::create(&transaction, game.id, *question_id)?;
-                    }
-                    transaction
-                        .commit()
-                        .and_then(|()| Ok(game))
-                        .map_err(|err| error::ErrorInternalServerError(err))
-                })?)
-            });
+    connection
+        .transaction::<Game, Error, _>(|| {
+            let game = Game::create(&connection)?;
 
-        result
-    }
-}
+            for question_id in &params.question_ids {
+                GameQuestion::create(&connection, game.id, *question_id)?;
+            }
 
-pub fn create(
-    (req, params): (HttpRequest<AppState>, Json<CreateGameRequest>),
-) -> FutureResponse<HttpResponse> {
-    req.state()
-        .db
-        .send(params.0.clone())
-        .from_err()
-        .and_then(|res| match res {
-            Ok(game) => Ok(HttpResponse::Ok().json(game)),
-            Err(err) => Ok(HttpResponse::from(err)),
+            Ok(game)
         })
-        .responder()
+        .and_then(|game| Ok(HttpResponse::Ok().json(game)))
+        .map_err(|err| error::ErrorInternalServerError(err))
 }
 
 #[cfg(test)]
 mod tests {
     use std;
 
-    use actix_web::{http, HttpMessage};
+    use actix_web::http;
     use chrono::{TimeZone, Utc};
     use serde_json;
 
-    use app_tests::{get_server, POOL};
-    use db::{get_conn, models::Game};
+    use crate::db::{get_conn, models::Game};
+    use crate::tests::helpers::tests::{test_post, POOL};
 
     use super::CreateGameRequest;
 
-    #[test]
-    fn test_create_game() {
+    #[actix_rt::test]
+    async fn test_create_game() {
         let conn = get_conn(&POOL).unwrap();
-
         let rows = conn.query(
             "INSERT INTO questions (body, created_at, updated_at) VALUES ('This is the question', $1, $2) RETURNING *",
             &[
@@ -85,22 +61,13 @@ mod tests {
 
         let question_ids: Vec<i32> = rows.iter().map(|row| row.get(0)).collect();
 
-        let mut srv = get_server();
-        let req = srv
-            .client(http::Method::POST, "/api/games")
-            .json(CreateGameRequest {
+        let res = test_post(
+            "/api/games",
+            CreateGameRequest {
                 question_ids: question_ids.clone(),
-            })
-            .map_err(|err| {
-                println!("Req error {:?}", err);
-            })
-            .unwrap();
-        let res = srv
-            .execute(req.send())
-            .map_err(|err| {
-                println!("Res error {:?}", err);
-            })
-            .unwrap();
+            },
+        )
+        .await;
 
         assert!(res.status().is_success());
 

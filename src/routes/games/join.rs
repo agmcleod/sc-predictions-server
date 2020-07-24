@@ -1,19 +1,14 @@
-use actix::prelude::{Handler, Message};
-use actix_web::{
-    AsyncResponder, FutureResponse, HttpRequest, HttpResponse, Json, ResponseError, Result,
-};
-use futures::Future;
+use actix_web::{web, Error, HttpResponse, Result};
+use serde::Deserialize;
 use validator::Validate;
 
-use app::AppState;
-use db::{
+use crate::db::{
     get_conn,
     models::{Game, User},
-    DbExecutor,
+    PgPool,
 };
-use errors::{DBError, Error};
 
-#[derive(Clone, Deserialize, Serialize, Validate)]
+#[derive(Clone, Deserialize, Validate)]
 pub struct JoinRequest {
     #[validate(length(min = "3"))]
     name: String,
@@ -21,45 +16,18 @@ pub struct JoinRequest {
     slug: String,
 }
 
-impl Message for JoinRequest {
-    type Result = Result<User, Error>;
-}
-
-impl Handler<JoinRequest> for DbExecutor {
-    type Result = Result<User, Error>;
-
-    fn handle(&mut self, request: JoinRequest, _: &mut Self::Context) -> Self::Result {
-        use postgres_mapper::FromPostgresRow;
-        let connection = get_conn(&self.0).unwrap();
-        connection
-            .query("SELECT * FROM games WHERE slug = $1", &[&request.slug])
-            .map_err(|err| Error::DBError(DBError::PGError(err)))
-            .and_then(|rows| {
-                if rows.len() == 0 {
-                    Err(Error::DBError(DBError::NoRecord))
-                } else {
-                    Game::from_postgres_row(rows.get(0))
-                        .map_err(|err| Error::DBError(DBError::MapError(err.to_string())))
-                        .and_then(|game| User::create(&connection, request.name, game.id))
-                }
-            })
-    }
-}
-
-pub fn join(
-    (req, params): (HttpRequest<AppState>, Json<JoinRequest>),
-) -> FutureResponse<HttpResponse> {
+pub async fn join(
+    pool: web::Data<PgPool>,
+    params: web::Json<JoinRequest>,
+) -> Result<HttpResponse, Error> {
     match params.validate() {
-        Ok(_) => req
-            .state()
-            .db
-            .send(params.0.clone())
-            .from_err()
-            .and_then(|res| match res {
-                Ok(user) => Ok(HttpResponse::Ok().json(user)),
-                Err(err) => Ok(err.error_response()),
-            })
-            .responder(),
+        Ok(_) => {
+            let connection = get_conn(&pool).unwrap();
+            let game = Game::find_by_slug(&connection, params.slug)?;
+            let user = User::create(&connection, params.name, game.id)?;
+
+            Ok(HttpResponse::Ok().json(user))
+        }
         Err(e) => Box::new(futures::future::ok(
             Error::ValidationError(e).error_response(),
         )),
@@ -70,17 +38,22 @@ pub fn join(
 mod tests {
     use std;
 
-    use actix_web::{http, HttpMessage};
-    use postgres_mapper::FromPostgresRow;
+    use actix_web::http;
+    use diesel;
     use serde_json;
 
-    use app_tests::{get_server, POOL};
-    use db::{
-        get_conn,
-        models::{Game, User},
-    };
+    use crate::app_tests::{get_server, POOL};
+    use crate::db::{get_conn, models::User};
+    use crate::schema::games;
 
     use super::JoinRequest;
+
+    #[derive(Insertable)]
+    #[table_name = "games"]
+    struct NewGame {
+        slug: String,
+        locked: bool,
+    }
 
     #[test]
     fn test_join_game() {
@@ -93,7 +66,12 @@ mod tests {
             )
             .unwrap();
 
-        let game = Game::from_postgres_row(rows.get(0)).unwrap();
+        let game = diesel::insert_into(games::table)
+            .values(NewGame {
+                slug: "abc123".to_string(),
+                locked: false,
+            })
+            .get_result(&conn)?;
 
         let mut srv = get_server();
         let req = srv

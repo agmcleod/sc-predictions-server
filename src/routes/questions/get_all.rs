@@ -1,58 +1,25 @@
-use actix::prelude::{Handler, Message};
-use actix_web::{error, AsyncResponder, Error, FutureResponse, HttpRequest, HttpResponse, Result};
-use futures::Future;
+use actix_web::{web, Error, HttpResponse, Result};
 
-use app::AppState;
-use db::{get_conn, models::Question, DbExecutor};
+use crate::db::{get_conn, models::Question, PgPool};
 
-// response object
-#[derive(Deserialize, Serialize)]
-pub struct AllQuestions {
-    pub questions: Vec<Question>,
-}
+pub async fn get_all(pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
+    let connection = get_conn(&pool).unwrap();
 
-pub struct GetAllQuestions;
+    let questions = Question::get_all(&connection)?;
 
-impl Message for GetAllQuestions {
-    type Result = Result<AllQuestions, Error>;
-}
-
-impl Handler<GetAllQuestions> for DbExecutor {
-    type Result = Result<AllQuestions, Error>;
-
-    fn handle(&mut self, _: GetAllQuestions, _: &mut Self::Context) -> Self::Result {
-        let connection = get_conn(&self.0).unwrap();
-
-        Ok(Question::get_all(&connection)
-            .map_err(|err| error::ErrorInternalServerError(err))
-            .and_then(|results| Ok(AllQuestions { questions: results }))?)
-    }
-}
-
-pub fn get_all(req: &HttpRequest<AppState>) -> FutureResponse<HttpResponse> {
-    req.state()
-        .db
-        .send(GetAllQuestions {})
-        .from_err()
-        .and_then(|res| match res {
-            Ok(all_questions) => Ok(HttpResponse::Ok().json(all_questions)),
-            Err(err) => Ok(HttpResponse::from(err)),
-        })
-        .responder()
+    Ok(HttpResponse::Ok().json(questions))
 }
 
 #[cfg(test)]
 mod tests {
     use std;
 
-    use actix_web::{http, HttpMessage};
+    use actix_web::http;
     use chrono::{TimeZone, Utc};
     use serde_json;
 
-    use app_tests::{get_server, POOL};
-    use db::get_conn;
-
-    use super::AllQuestions;
+    use crate::app_tests::{get_server, POOL};
+    use crate::db::{get_conn, models::Question};
 
     #[test]
     fn test_questions_empty() {
@@ -71,7 +38,7 @@ mod tests {
 
         let bytes = srv.execute(res.body()).unwrap();
         let body = std::str::from_utf8(&bytes).unwrap();
-        let response: AllQuestions = serde_json::from_str(body).unwrap();
+        let response: Vec<Question> = serde_json::from_str(body).unwrap();
 
         assert_eq!(response.questions.len(), 0);
     }
@@ -104,7 +71,7 @@ mod tests {
 
         let bytes = srv.execute(res.body()).unwrap();
         let body = std::str::from_utf8(&bytes).unwrap();
-        let response: AllQuestions = serde_json::from_str(body).unwrap();
+        let response: Vec<Question> = serde_json::from_str(body).unwrap();
 
         assert_eq!(response.questions.len(), 1);
         assert_eq!(response.questions[0].body, "This is the question");

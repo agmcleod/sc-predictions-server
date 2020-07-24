@@ -1,8 +1,11 @@
 use actix_web::{error, Error};
 use chrono::{DateTime, Utc};
-use postgres::transaction::Transaction;
+use diesel::PgConnection;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize, PostgresMapper)]
+use crate::schema::game_questions;
+
+#[derive(Debug, Serialize, Deserialize, Queryable)]
 pub struct GameQuestion {
     pub id: i32,
     pub game_id: i32,
@@ -11,18 +14,20 @@ pub struct GameQuestion {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Insertable)]
+#[table_name="game_questions"]
+struct NewGameQuestion {
+    game_id: i32,
+    question_id: i32,
+}
+
 impl GameQuestion {
     pub fn create(
-        transaction: &Transaction,
+        conn: &PgConnection,
         game_id: i32,
         question_id: i32,
     ) -> Result<GameQuestion, Error> {
-        use postgres_mapper::FromPostgresRow;
-
-        let sql = "INSERT INTO game_questions (id, game_id, question_id) VALUES(DEFAULT, $1, $2) RETURNING *";
-        let rows = transaction.query(sql, &[&game_id, &question_id]).unwrap();
-
-        GameQuestion::from_postgres_row(rows.get(0))
-            .map_err(|err| error::ErrorInternalServerError(err))
+        use crate::schema::game_questions::{table};
+        diesel::insert_into(table).values(NewGameQuestion { game_id, question_id }).get_result(conn).map_err(|err| error::ErrorInternalServerError(err))
     }
 }
