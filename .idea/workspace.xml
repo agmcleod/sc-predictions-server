@@ -22,15 +22,18 @@
     <cargoProject FILE="$PROJECT_DIR$/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/src/validate.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/game.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/game.rs" afterDir="false" />
+    <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="compiling with actix 2 &amp; diesel">
+      <change beforePath="$PROJECT_DIR$/.idea/sc-predictions-server.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sc-predictions-server.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/errors.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/errors.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/create.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/create.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/routes/games/join.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/join.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/questions/get_all.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/questions/get_all.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/tests/helpers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/tests/helpers.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/utils/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/utils/mod.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -58,11 +61,13 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
+    <property name="TERMINAL_CUSTOM_COMMANDS_GOT_IT" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
-    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+    <property name="settings.editor.selected.configurable" value="language.rust.cargo" />
   </component>
   <component name="RustProjectSettings">
+    <option name="externalLinter" value="Clippy" />
     <option name="runExternalLinterOnTheFly" value="true" />
     <option name="runRustfmtOnSave" value="true" />
     <option name="toolchainHomeDirectory" value="$USER_HOME$/.cargo/bin" />
@@ -79,6 +84,14 @@
       <option name="presentableId" value="Default" />
       <updated>1595621467092</updated>
     </task>
+    <task id="LOCAL-00001" summary="compiling with actix 2 &amp; diesel">
+      <created>1595957231984</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1595957231984</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -93,11 +106,19 @@
     </option>
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="compiling with actix 2 &amp; diesel" />
+    <option name="LAST_COMMIT_MESSAGE" value="compiling with actix 2 &amp; diesel" />
+  </component>
   <component name="WindowStateProjectService">
     <state x="734" y="355" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1595944202982">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="734" y="355" key="#com.intellij.execution.impl.EditConfigurationsDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595944202982" />
+    <state x="1082" y="529" key="ExperimentsDialog" timestamp="1595958409214">
+      <screen x="0" y="0" width="2560" height="1400" />
+    </state>
+    <state x="1082" y="529" key="ExperimentsDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958409214" />
     <state width="2517" height="402" key="GridCell.Tab.0.bottom" timestamp="1595956793350">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -114,17 +135,25 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state width="2517" height="402" key="GridCell.Tab.0.right/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
-    <state x="781" y="345" key="SettingsEditor" timestamp="1595956923452">
+    <state x="781" y="345" key="SettingsEditor" timestamp="1595958351777">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="781" y="345" key="SettingsEditor/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956923452" />
-    <state x="987" y="299" width="585" height="801" key="find.popup" timestamp="1595623169412">
+    <state x="781" y="345" key="SettingsEditor/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958351777" />
+    <state x="1089" y="614" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1595957243546">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="987" y="299" width="585" height="801" key="find.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595623169412" />
+    <state x="1089" y="614" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595957243546" />
+    <state x="987" y="299" width="585" height="801" key="find.popup" timestamp="1595962523022">
+      <screen x="0" y="0" width="2560" height="1400" />
+    </state>
+    <state x="987" y="299" width="585" height="801" key="find.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595962523022" />
     <state x="936" y="330" width="672" height="677" key="run.anything.popup" timestamp="1595946611621">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="936" y="330" width="672" height="677" key="run.anything.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595946611621" />
+    <state x="943" y="315" width="672" height="678" key="search.everywhere.popup" timestamp="1595958386856">
+      <screen x="0" y="0" width="2560" height="1400" />
+    </state>
+    <state x="943" y="315" width="672" height="678" key="search.everywhere.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958386856" />
   </component>
 </project>

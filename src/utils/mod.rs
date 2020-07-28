@@ -1,7 +1,7 @@
 use std::iter;
 
 use radix;
-use rand::{prelude::thread_rng, Rng, distributions::Alphanumeric};
+use rand::{distributions::Alphanumeric, prelude::thread_rng, Rng};
 
 pub fn create_slug_from_id(id: i32) -> String {
     let id = format!("{}", id);
@@ -18,7 +18,7 @@ pub fn create_slug_from_id(id: i32) -> String {
                 .map(|()| rng.sample(Alphanumeric))
                 .take(len)
                 .collect::<String>()
-        )
+        );
     }
 
     slug.to_string()

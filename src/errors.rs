@@ -3,23 +3,20 @@ use actix_web::{
     http::StatusCode,
     HttpResponse,
 };
+use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
 use r2d2::Error as PoolError;
 use serde::{Deserialize, Serialize};
 
-#[derive(PartialEq, Fail, Debug)]
+#[derive(Debug, Display, PartialEq)]
+#[allow(dead_code)]
 pub enum Error {
-    #[fail(display = "bad request")]
     BadRequest(String),
-    #[fail(display = "internal server error")]
     InternalServerError(String),
-    #[fail(display = "not found")]
     NotFound(String),
-    #[fail(display = "db error")]
     PoolError(String),
-    #[fail(display = "validation error")]
+    #[display(fmt = "")]
     ValidationError(Vec<String>),
-    #[fail(display = "blocking error")]
     BlockingError(String),
 }
 

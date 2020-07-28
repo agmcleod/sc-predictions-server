@@ -24,6 +24,7 @@ pub async fn join(
 ) -> Result<HttpResponse, Error> {
     validate(&params)?;
     let connection = get_conn(&pool).unwrap();
+    println!("try by slug");
     let game = Game::find_by_slug(&connection, &params.slug)?;
     let user = User::create(&connection, params.name.clone(), game.id)?;
 
@@ -39,6 +40,7 @@ mod tests {
         models::{Game, User},
         new_pool,
     };
+    use crate::errors::ErrorResponse;
     use crate::schema::{games, users};
     use crate::tests::helpers::tests::test_post;
 
@@ -80,21 +82,21 @@ mod tests {
 
         assert_eq!(user.user_name, "agmcleod");
 
-        diesel::delete(games::table).execute(&conn).unwrap();
         diesel::delete(users::table).execute(&conn).unwrap();
+        diesel::delete(games::table).execute(&conn).unwrap();
     }
 
     #[actix_rt::test]
     async fn test_game_not_found() {
-        let res: (u16, User) = test_post(
+        let res: (u16, ErrorResponse) = test_post(
             "/api/games/join",
             JoinRequest {
                 name: "agmcleod".to_string(),
-                slug: "null".to_string(),
+                slug: "-fake-".to_string(),
             },
         )
         .await;
 
-        assert_eq!(res.0, 422);
+        assert_eq!(res.0, 404);
     }
 }

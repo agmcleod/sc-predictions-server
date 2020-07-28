@@ -6,7 +6,7 @@ test_prepare:
 	docker-compose -f docker-compose.test.yml exec server_test diesel migration run
 
 test:
-	docker-compose -f docker-compose.test.yml exec server_test cargo test $(T) -- --test-threads=1
+	docker-compose -f docker-compose.test.yml exec server_test cargo test $(T) -- --nocapture --test-threads=1
 
 
 seed_files := $(wildcard seeds/*)

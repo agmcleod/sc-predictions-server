@@ -1,8 +1,6 @@
 #[macro_use]
 extern crate diesel;
 #[macro_use]
-extern crate failure;
-#[macro_use]
 extern crate log;
 #[macro_use]
 extern crate validator_derive;
@@ -20,8 +18,8 @@ mod errors;
 mod routes;
 mod schema;
 mod tests;
-mod validate;
 mod utils;
+mod validate;
 
 use routes::routes;
 
