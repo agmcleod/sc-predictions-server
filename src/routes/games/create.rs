@@ -1,5 +1,4 @@
-use actix_web::{error, web, HttpResponse, Result};
-use diesel::result::Error;
+use actix_web::{web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 
 use crate::db::{
@@ -7,32 +6,37 @@ use crate::db::{
     models::{Game, GameQuestion},
     PgPool,
 };
+use crate::errors::Error;
 
 #[derive(Clone, Deserialize, Serialize)]
 pub struct CreateGameRequest {
     question_ids: Vec<i32>,
 }
 
+fn create_db_records(
+    pool: web::Data<PgPool>,
+    params: web::Json<CreateGameRequest>,
+) -> Result<Game, Error> {
+    use diesel::connection::Connection;
+    let connection = get_conn(&pool).unwrap();
+
+    connection.transaction::<Game, Error, _>(|| {
+        let game = Game::create(&connection)?;
+
+        for question_id in &params.question_ids {
+            GameQuestion::create(&connection, game.id, *question_id)?;
+        }
+
+        Ok(game)
+    })
+}
+
 pub async fn create(
     pool: web::Data<PgPool>,
     params: web::Json<CreateGameRequest>,
-) -> Result<HttpResponse, actix_web::Error> {
-    use diesel::connection::Connection;
-
-    let connection = get_conn(&pool).unwrap();
-
-    connection
-        .transaction::<Game, Error, _>(|| {
-            let game = Game::create(&connection)?;
-
-            for question_id in &params.question_ids {
-                GameQuestion::create(&connection, game.id, *question_id)?;
-            }
-
-            Ok(game)
-        })
-        .map_err(|err| error::ErrorInternalServerError(err))
-        .and_then(|game| Ok(HttpResponse::Ok().json(game)))
+) -> Result<HttpResponse, Error> {
+    let game = web::block(move || create_db_records(pool, params)).await?;
+    Ok(HttpResponse::Ok().json(game))
 }
 
 #[cfg(test)]
@@ -53,9 +57,8 @@ mod tests {
     async fn test_create_game() {
         let pool = new_pool();
         let conn = get_conn(&pool).unwrap();
-        let body = "This is the question".to_string();
         let question = diesel::insert_into(questions::table)
-            .values(questions::dsl::body.eq("This is the equestion"))
+            .values(questions::dsl::body.eq("This is the question"))
             .get_result::<Question>(&conn)
             .unwrap();
 

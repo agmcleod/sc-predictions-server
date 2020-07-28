@@ -1,5 +1,5 @@
-use actix_web::{web, Error, HttpResponse, Result};
-use serde::Deserialize;
+use actix_web::{web, HttpResponse, Result};
+use serde::{Deserialize, Serialize};
 use validator::Validate;
 
 use crate::db::{
@@ -7,8 +7,10 @@ use crate::db::{
     models::{Game, User},
     PgPool,
 };
+use crate::errors::Error;
+use crate::validate::validate;
 
-#[derive(Clone, Deserialize, Validate)]
+#[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct JoinRequest {
     #[validate(length(min = "3"))]
     name: String,
@@ -20,33 +22,28 @@ pub async fn join(
     pool: web::Data<PgPool>,
     params: web::Json<JoinRequest>,
 ) -> Result<HttpResponse, Error> {
-    match params.validate() {
-        Ok(_) => {
-            let connection = get_conn(&pool).unwrap();
-            let game = Game::find_by_slug(&connection, params.slug)?;
-            let user = User::create(&connection, params.name, game.id)?;
+    validate(&params)?;
+    let connection = get_conn(&pool).unwrap();
+    let game = Game::find_by_slug(&connection, &params.slug)?;
+    let user = User::create(&connection, params.name.clone(), game.id)?;
 
-            Ok(HttpResponse::Ok().json(user))
-        }
-        Err(e) => Box::new(futures::future::ok(
-            Error::ValidationError(e).error_response(),
-        )),
-    }
+    Ok(HttpResponse::Ok().json(user))
 }
 
 #[cfg(test)]
 mod tests {
-    use std;
-
-    use actix_web::http;
     use diesel;
-    use serde_json;
 
-    use crate::app_tests::{get_server, POOL};
-    use crate::db::{get_conn, models::User};
-    use crate::schema::games;
+    use crate::db::{
+        get_conn,
+        models::{Game, User},
+        new_pool,
+    };
+    use crate::schema::{games, users};
+    use crate::tests::helpers::tests::test_post;
 
     use super::JoinRequest;
+    use diesel::RunQueryDsl;
 
     #[derive(Insertable)]
     #[table_name = "games"]
@@ -55,61 +52,49 @@ mod tests {
         locked: bool,
     }
 
-    #[test]
-    fn test_join_game() {
-        let conn = get_conn(&POOL).unwrap();
+    #[actix_rt::test]
+    async fn test_join_game() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
 
-        let rows = conn
-            .query(
-                "INSERT INTO games (slug, locked) VALUES ('abc123', false) RETURNING *",
-                &[],
-            )
-            .unwrap();
-
-        let game = diesel::insert_into(games::table)
+        let game: Game = diesel::insert_into(games::table)
             .values(NewGame {
                 slug: "abc123".to_string(),
                 locked: false,
             })
-            .get_result(&conn)?;
-
-        let mut srv = get_server();
-        let req = srv
-            .client(http::Method::POST, "/api/games/join")
-            .json(JoinRequest {
-                name: "agmcleod".to_string(),
-                slug: game.slug,
-            })
+            .get_result(&conn)
             .unwrap();
 
-        let res = srv.execute(req.send()).unwrap();
-        assert!(res.status().is_success());
+        let res = test_post(
+            "/api/games/join",
+            JoinRequest {
+                name: "agmcleod".to_string(),
+                slug: game.slug.unwrap(),
+            },
+        )
+        .await;
 
-        let bytes = srv.execute(res.body()).unwrap();
-        let body = std::str::from_utf8(&bytes).unwrap();
-        let user: serde_json::Result<User> = serde_json::from_str(body);
+        assert_eq!(res.0, 200);
 
-        assert!(user.is_ok());
+        let user: User = res.1;
 
-        let rows = conn.query("SELECT * FROM users", &[]).unwrap();
-        assert_eq!(rows.len(), 1);
+        assert_eq!(user.user_name, "agmcleod");
 
-        conn.execute("DELETE FROM users", &[]).unwrap();
-        conn.execute("DELETE FROM games", &[]).unwrap();
+        diesel::delete(games::table).execute(&conn).unwrap();
+        diesel::delete(users::table).execute(&conn).unwrap();
     }
 
-    #[test]
-    fn test_game_not_found() {
-        let mut srv = get_server();
-        let req = srv
-            .client(http::Method::POST, "/api/games/join")
-            .json(JoinRequest {
+    #[actix_rt::test]
+    async fn test_game_not_found() {
+        let res: (u16, User) = test_post(
+            "/api/games/join",
+            JoinRequest {
                 name: "agmcleod".to_string(),
                 slug: "null".to_string(),
-            })
-            .unwrap();
+            },
+        )
+        .await;
 
-        let res = srv.execute(req.send()).unwrap();
-        assert_eq!(res.status(), http::StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(res.0, 422);
     }
 }

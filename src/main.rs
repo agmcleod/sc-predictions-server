@@ -20,6 +20,7 @@ mod errors;
 mod routes;
 mod schema;
 mod tests;
+mod validate;
 mod utils;
 
 use routes::routes;

@@ -29,7 +29,7 @@ impl Game {
             .get_result::<Game>(conn)
     }
 
-    pub fn find_by_slug(conn: &PgConnection, slug_value: String) -> Result<Game, result::Error> {
+    pub fn find_by_slug(conn: &PgConnection, slug_value: &String) -> Result<Game, result::Error> {
         use crate::schema::games::dsl::{games, slug};
 
         games.filter(slug.eq(slug_value)).first::<Game>(conn)

@@ -1,6 +1,7 @@
-use actix_web::{web, Error, HttpResponse, Result};
+use actix_web::{web, HttpResponse, Result};
 
 use crate::db::{get_conn, models::Question, PgPool};
+use crate::errors::Error;
 
 pub async fn get_all(pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
     let connection = get_conn(&pool).unwrap();
@@ -12,70 +13,47 @@ pub async fn get_all(pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
 
 #[cfg(test)]
 mod tests {
-    use std;
+    use diesel;
 
-    use actix_web::http;
-    use chrono::{TimeZone, Utc};
-    use serde_json;
+    use crate::db::{get_conn, models::Question, new_pool};
+    use crate::schema::questions;
+    use crate::tests::helpers::tests::test_get;
+    use diesel::RunQueryDsl;
 
-    use crate::app_tests::{get_server, POOL};
-    use crate::db::{get_conn, models::Question};
-
-    #[test]
-    fn test_questions_empty() {
-        let mut srv = get_server();
-        let req = srv
-            .client(http::Method::GET, "/api/questions")
-            .finish()
-            .unwrap();
-        let res = srv
-            .execute(req.send())
-            .map_err(|err| {
-                println!("{}", err);
-            })
-            .unwrap();
-        assert!(res.status().is_success());
-
-        let bytes = srv.execute(res.body()).unwrap();
-        let body = std::str::from_utf8(&bytes).unwrap();
-        let response: Vec<Question> = serde_json::from_str(body).unwrap();
-
-        assert_eq!(response.questions.len(), 0);
+    #[derive(Insertable)]
+    #[table_name = "questions"]
+    struct NewQuestion {
+        body: String,
     }
 
-    #[test]
-    fn test_questions_populated() {
-        let conn = get_conn(&POOL).unwrap();
+    #[actix_rt::test]
+    async fn test_questions_empty() {
+        let res: (u16, Vec<Question>) = test_get("/api/questions").await;
+        assert_eq!(res.0, 200);
 
-        conn.execute(
-            "INSERT INTO questions (body, created_at, updated_at) VALUES ('This is the question', $1, $2)",
-            &[
-                &Utc.ymd(2017, 12, 10).and_hms(0, 0, 0),
-                &Utc.ymd(2017, 12, 10).and_hms(0, 0, 0),
-            ],
-        ).unwrap();
+        assert_eq!(res.1.len(), 0);
+    }
 
-        let mut srv = get_server();
+    #[actix_rt::test]
+    async fn test_questions_populated() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
 
-        let req = srv
-            .client(http::Method::GET, "/api/questions")
-            .finish()
-            .unwrap();
-        let res = srv
-            .execute(req.send())
-            .map_err(|err| {
-                println!("{}", err);
+        diesel::insert_into(questions::table)
+            .values(NewQuestion {
+                body: "This is the question".to_string(),
             })
+            .execute(&conn)
             .unwrap();
-        assert!(res.status().is_success());
 
-        let bytes = srv.execute(res.body()).unwrap();
-        let body = std::str::from_utf8(&bytes).unwrap();
-        let response: Vec<Question> = serde_json::from_str(body).unwrap();
+        let res = test_get("/api/questions").await;
+        assert_eq!(res.0, 200);
 
-        assert_eq!(response.questions.len(), 1);
-        assert_eq!(response.questions[0].body, "This is the question");
+        let body: Vec<Question> = res.1;
 
-        conn.execute("DELETE FROM questions", &[]).unwrap();
+        assert_eq!(body.len(), 1);
+        assert_eq!(body[0].body, "This is the question");
+
+        diesel::delete(questions::table).execute(&conn).unwrap();
     }
 }
