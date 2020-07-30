@@ -1,0 +1,4 @@
+ALTER TABLE users
+    ALTER COLUMN session_id SET DATA TYPE TEXT,
+    ALTER COLUMN session_id DROP NOT NULL,
+    ALTER COLUMN session_id SET DEFAULT NULL;

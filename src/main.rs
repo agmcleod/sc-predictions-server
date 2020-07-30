@@ -13,6 +13,7 @@ use actix_web::{middleware::Logger, App, HttpServer};
 use dotenv::dotenv;
 use env_logger;
 
+mod auth;
 mod db;
 mod errors;
 mod routes;
@@ -26,7 +27,6 @@ use routes::routes;
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    env::set_var("RUST_LOG", "actix_web=info");
     env_logger::init();
 
     let pool = db::new_pool();
@@ -38,13 +38,14 @@ async fn main() -> std::io::Result<()> {
             .finish();
 
         App::new()
-            .data(pool.clone())
             .wrap(cors)
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
+            .wrap(auth::get_identity_service())
+            .data(pool.clone())
             .configure(routes)
     })
-    .bind(&"127.0.0.1:8080")?
+    .bind("0.0.0.0:8080")?
     .run()
     .await
 }

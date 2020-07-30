@@ -11,7 +11,7 @@ table! {
 table! {
     games (id) {
         id -> Int4,
-        creator -> Uuid,
+        creator -> Nullable<Text>,
         locked -> Bool,
         slug -> Nullable<Varchar>,
         created_at -> Timestamptz,
@@ -33,7 +33,7 @@ table! {
         id -> Int4,
         user_name -> Varchar,
         game_id -> Int4,
-        session_id -> Uuid,
+        session_id -> Nullable<Text>,
         score -> Int4,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,

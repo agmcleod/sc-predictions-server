@@ -12,18 +12,21 @@ use serde::{Deserialize, Serialize};
 #[allow(dead_code)]
 pub enum Error {
     BadRequest(String),
+    CannotDecodeJwtToken(String),
+    CannotEncodeJwtToken(String),
     InternalServerError(String),
     NotFound(String),
     PoolError(String),
     #[display(fmt = "")]
     ValidationError(Vec<String>),
+    UnprocessableEntity(String),
     BlockingError(String),
 }
 
 // User-friendly error messages
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ErrorResponse {
-    errors: Vec<String>,
+    pub errors: Vec<String>,
 }
 
 impl ResponseError for Error {
@@ -38,6 +41,9 @@ impl ResponseError for Error {
             }
             Error::NotFound(message) => {
                 HttpResponse::NotFound().json::<ErrorResponse>(message.into())
+            }
+            Error::UnprocessableEntity(message) => {
+                HttpResponse::UnprocessableEntity().json::<ErrorResponse>(message.into())
             }
             _ => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
         }

@@ -1,7 +1,8 @@
 use chrono::{DateTime, Utc};
-use diesel::{result::Error, PgConnection, RunQueryDsl};
+use diesel::{PgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
+use crate::errors::Error;
 use crate::schema::game_questions;
 
 #[derive(Debug, Serialize, Deserialize, Queryable)]
@@ -27,11 +28,13 @@ impl GameQuestion {
         question_id: i32,
     ) -> Result<GameQuestion, Error> {
         use crate::schema::game_questions::table;
-        diesel::insert_into(table)
+        let game_question = diesel::insert_into(table)
             .values(NewGameQuestion {
                 game_id,
                 question_id,
             })
-            .get_result(conn)
+            .get_result(conn)?;
+
+        Ok(game_question)
     }
 }
