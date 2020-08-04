@@ -13,12 +13,11 @@ pub async fn get_all(pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
 
 #[cfg(test)]
 mod tests {
-    use diesel;
+    use diesel::{self, RunQueryDsl};
 
     use crate::db::{get_conn, models::Question, new_pool};
     use crate::schema::questions;
     use crate::tests::helpers::tests::test_get;
-    use diesel::RunQueryDsl;
 
     #[derive(Insertable)]
     #[table_name = "questions"]

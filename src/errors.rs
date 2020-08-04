@@ -15,6 +15,7 @@ pub enum Error {
     CannotDecodeJwtToken(String),
     CannotEncodeJwtToken(String),
     InternalServerError(String),
+    Unauthorized,
     NotFound(String),
     PoolError(String),
     #[display(fmt = "")]
@@ -45,7 +46,18 @@ impl ResponseError for Error {
             Error::UnprocessableEntity(message) => {
                 HttpResponse::UnprocessableEntity().json::<ErrorResponse>(message.into())
             }
+            Error::Unauthorized => {
+                HttpResponse::Unauthorized().json::<ErrorResponse>("Unauthorized".into())
+            }
             _ => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
+        }
+    }
+}
+
+impl From<&str> for ErrorResponse {
+    fn from(error: &str) -> Self {
+        ErrorResponse {
+            errors: vec![error.into()],
         }
     }
 }

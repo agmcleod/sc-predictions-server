@@ -16,6 +16,7 @@ use env_logger;
 mod auth;
 mod db;
 mod errors;
+mod middleware;
 mod routes;
 mod schema;
 mod tests;

@@ -1,3 +1,4 @@
+use actix_identity::Identity;
 use actix_web::{web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 
@@ -32,10 +33,16 @@ fn create_db_records(
 }
 
 pub async fn create(
+    id: Identity,
     pool: web::Data<PgPool>,
     params: web::Json<CreateGameRequest>,
 ) -> Result<HttpResponse, Error> {
     let game = web::block(move || create_db_records(pool, params)).await?;
+
+    if let Some(token) = &game.creator {
+        id.remember(token.clone());
+    }
+
     Ok(HttpResponse::Ok().json(game))
 }
 

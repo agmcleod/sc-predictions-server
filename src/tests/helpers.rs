@@ -1,10 +1,12 @@
 #[cfg(test)]
 pub mod tests {
 
-    use actix_web::{test, App};
+    use actix_identity::Identity;
+    use actix_web::{test, App, FromRequest};
     use serde::{de::DeserializeOwned, Serialize};
     use serde_json;
 
+    use crate::auth::get_identity_service;
     use crate::db;
     use crate::routes::routes;
 
@@ -13,7 +15,13 @@ pub mod tests {
     where
         R: DeserializeOwned,
     {
-        let mut app = test::init_service(App::new().data(db::new_pool()).configure(routes)).await;
+        let mut app = test::init_service(
+            App::new()
+                .wrap(get_identity_service())
+                .data(db::new_pool())
+                .configure(routes),
+        )
+        .await;
 
         let res =
             test::call_service(&mut app, test::TestRequest::get().uri(route).to_request()).await;
@@ -36,7 +44,13 @@ pub mod tests {
     where
         R: DeserializeOwned,
     {
-        let mut app = test::init_service(App::new().data(db::new_pool()).configure(routes)).await;
+        let mut app = test::init_service(
+            App::new()
+                .wrap(get_identity_service())
+                .data(db::new_pool())
+                .configure(routes),
+        )
+        .await;
         let res = test::call_service(
             &mut app,
             test::TestRequest::post()
@@ -57,5 +71,14 @@ pub mod tests {
         });
 
         (status, json_body)
+    }
+
+    pub async fn get_identity() -> Identity {
+        let (request, mut payload) =
+            test::TestRequest::with_header("content-type", "application/json").to_http_parts();
+        Option::<Identity>::from_request(&request, &mut payload)
+            .await
+            .unwrap()
+            .unwrap()
     }
 }

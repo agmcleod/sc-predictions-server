@@ -1,3 +1,4 @@
+use actix_identity::Identity;
 use actix_web::{web, HttpResponse, Result};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
@@ -19,6 +20,7 @@ pub struct JoinRequest {
 }
 
 pub async fn join(
+    id: Identity,
     pool: web::Data<PgPool>,
     params: web::Json<JoinRequest>,
 ) -> Result<HttpResponse, Error> {
@@ -32,6 +34,10 @@ pub async fn join(
         return Err(Error::UnprocessableEntity("Username is taken".to_string()));
     }
     let user = User::create(&connection, params.name.clone(), game.id)?;
+
+    if let Some(token) = &user.session_id {
+        id.remember(token.clone());
+    }
 
     Ok(HttpResponse::Ok().json(user))
 }

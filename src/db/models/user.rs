@@ -19,7 +19,7 @@ pub struct User {
 
 #[derive(Insertable)]
 #[table_name = "users"]
-pub struct NewUser {
+struct NewUser {
     user_name: String,
     game_id: i32,
 }
@@ -36,7 +36,7 @@ impl User {
             .values(NewUser { user_name, game_id })
             .get_result(connection)?;
 
-        let jwt = create_jwt(PrivateClaim::new(result.id, result.user_name))?;
+        let jwt = create_jwt(PrivateClaim::new(result.id, result.user_name, game_id))?;
         let result: User = diesel::update(table)
             .set(dsl::session_id.eq(jwt))
             .get_result(connection)?;

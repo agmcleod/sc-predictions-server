@@ -26,22 +26,22 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="fix on running in docker env&#10;prevent joining game in cases we dont want users to.">
-      <change afterPath="$PROJECT_DIR$/src/auth.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/routes/games/get_players.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/middleware/auth.rs" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/middleware/mod.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.test.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.test.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/auth.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/auth.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/db/models/game.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/game.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/game_question.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/game_question.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/question.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/question.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/db/models/user.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/user.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/errors.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/errors.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/games/create.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/create.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/games/get_players.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/get_players.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/routes/games/join.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/join.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/schema.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/questions/get_all.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/questions/get_all.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/tests/helpers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/tests/helpers.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,7 +72,7 @@
     <property name="TERMINAL_CUSTOM_COMMANDS_GOT_IT" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
-    <property name="settings.editor.selected.configurable" value="preferences.general" />
+    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
   </component>
   <component name="RustProjectSettings">
     <option name="externalLinter" value="Clippy" />
@@ -128,30 +128,34 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="1082" y="529" key="ExperimentsDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958409214" />
-    <state width="1398" height="272" key="GridCell.Tab.0.bottom" timestamp="1596054521738">
-      <screen x="0" y="23" width="1440" height="877" />
-    </state>
-    <state width="1398" height="272" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1596054521738" />
-    <state width="2517" height="402" key="GridCell.Tab.0.bottom/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
-    <state width="1398" height="272" key="GridCell.Tab.0.center" timestamp="1596054521737">
-      <screen x="0" y="23" width="1440" height="877" />
-    </state>
-    <state width="1398" height="272" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
-    <state width="2517" height="402" key="GridCell.Tab.0.center/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
-    <state width="1398" height="272" key="GridCell.Tab.0.left" timestamp="1596054521737">
-      <screen x="0" y="23" width="1440" height="877" />
-    </state>
-    <state width="1398" height="272" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
-    <state width="2517" height="402" key="GridCell.Tab.0.left/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
-    <state width="1398" height="272" key="GridCell.Tab.0.right" timestamp="1596054521737">
-      <screen x="0" y="23" width="1440" height="877" />
-    </state>
-    <state width="1398" height="272" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
-    <state width="2517" height="402" key="GridCell.Tab.0.right/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
-    <state x="2220" y="-42" key="SettingsEditor" timestamp="1596115652520">
+    <state width="1968" height="314" key="GridCell.Tab.0.bottom" timestamp="1596561762810">
       <screen x="1440" y="-292" width="2560" height="1417" />
     </state>
-    <state x="2220" y="-42" key="SettingsEditor/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596115652520" />
+    <state width="1968" height="314" key="GridCell.Tab.0.bottom/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596561762810" />
+    <state width="1398" height="272" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1596054521738" />
+    <state width="2517" height="402" key="GridCell.Tab.0.bottom/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
+    <state width="1968" height="314" key="GridCell.Tab.0.center" timestamp="1596561762809">
+      <screen x="1440" y="-292" width="2560" height="1417" />
+    </state>
+    <state width="1968" height="314" key="GridCell.Tab.0.center/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596561762809" />
+    <state width="1398" height="272" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
+    <state width="2517" height="402" key="GridCell.Tab.0.center/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
+    <state width="1968" height="314" key="GridCell.Tab.0.left" timestamp="1596561762808">
+      <screen x="1440" y="-292" width="2560" height="1417" />
+    </state>
+    <state width="1968" height="314" key="GridCell.Tab.0.left/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596561762808" />
+    <state width="1398" height="272" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
+    <state width="2517" height="402" key="GridCell.Tab.0.left/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
+    <state width="1968" height="314" key="GridCell.Tab.0.right" timestamp="1596561762810">
+      <screen x="1440" y="-292" width="2560" height="1417" />
+    </state>
+    <state width="1968" height="314" key="GridCell.Tab.0.right/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596561762810" />
+    <state width="1398" height="272" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
+    <state width="2517" height="402" key="GridCell.Tab.0.right/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595956793350" />
+    <state x="2220" y="-42" key="SettingsEditor" timestamp="1596136907013">
+      <screen x="1440" y="-292" width="2560" height="1417" />
+    </state>
+    <state x="2220" y="-42" key="SettingsEditor/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596136907013" />
     <state x="439" y="178" key="SettingsEditor/0.23.1440.877@0.23.1440.877" timestamp="1595970002424" />
     <state x="781" y="345" key="SettingsEditor/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958351777" />
     <state x="1089" y="614" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1595957243546">
@@ -170,9 +174,10 @@
       <screen x="1440" y="-292" width="2560" height="1417" />
     </state>
     <state x="2293" y="282" width="489" height="375" key="scopes/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596114794326" />
-    <state x="530" y="220" width="378" height="425" key="search.everywhere.popup" timestamp="1595969094589">
-      <screen x="0" y="23" width="1440" height="877" />
+    <state x="2382" y="26" width="672" height="687" key="search.everywhere.popup" timestamp="1596551542804">
+      <screen x="1440" y="-292" width="2560" height="1417" />
     </state>
+    <state x="2382" y="26" width="672" height="687" key="search.everywhere.popup/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596551542804" />
     <state x="530" y="220" width="378" height="425" key="search.everywhere.popup/0.23.1440.877@0.23.1440.877" timestamp="1595969094589" />
     <state x="943" y="315" width="672" height="678" key="search.everywhere.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958386856" />
   </component>

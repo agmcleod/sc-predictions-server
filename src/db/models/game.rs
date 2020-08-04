@@ -24,7 +24,7 @@ impl Game {
             .default_values()
             .get_result(conn)?;
         let new_slug = create_slug_from_id(game.id);
-        let jwt = create_jwt(PrivateClaim::new(game.id, new_slug.clone()))?;
+        let jwt = create_jwt(PrivateClaim::new(game.id, new_slug.clone(), game.id))?;
         let updated_game = diesel::update(dsl::games.find(game.id))
             .set((dsl::slug.eq(new_slug), dsl::creator.eq(jwt)))
             .get_result::<Game>(conn)?;

@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 actix-cors = "0.2"
 actix-identity = "0.2"
+actix-service = "1.0.5"
 actix-web = "2.0"
 actix-rt = "1.0"
 chrono = { versiob = "0.4.6", features = ["serde"] }
@@ -14,7 +15,7 @@ derive_more = "0.99.9"
 diesel = { version = "1.4.4", features = ["postgres", "r2d2", "uuid", "chrono"] }
 dotenv = "0.9.0"
 env_logger = "0.5.13"
-futures = "0.1"
+futures = "0.3.5"
 jsonwebtoken = "7.2.0"
 log = "0.4.0"
 radix = "0.4.1"
