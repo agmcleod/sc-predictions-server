@@ -1580,6 +1580,7 @@ name = "sc-predictions-server"
 version = "0.1.0"
 dependencies = [
  "actix-cors 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "actix-http 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "actix-identity 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "actix-rt 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "actix-service 1.0.5 (registry+https://github.com/rust-lang/crates.io-index)",

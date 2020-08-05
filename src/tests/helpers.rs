@@ -1,8 +1,10 @@
 #[cfg(test)]
 pub mod tests {
 
+    use actix_http::Request;
     use actix_identity::Identity;
-    use actix_web::{test, App, FromRequest};
+    use actix_service::Service;
+    use actix_web::{body::Body, dev::ServiceResponse, error::Error, test, App, FromRequest};
     use serde::{de::DeserializeOwned, Serialize};
     use serde_json;
 
@@ -10,18 +12,23 @@ pub mod tests {
     use crate::db;
     use crate::routes::routes;
 
-    /// Helper for HTTP GET integration tests
-    pub async fn test_get<R>(route: &str) -> (u16, R)
-    where
-        R: DeserializeOwned,
-    {
-        let mut app = test::init_service(
+    pub async fn get_service(
+    ) -> impl Service<Request = Request, Response = ServiceResponse<Body>, Error = Error> {
+        test::init_service(
             App::new()
                 .wrap(get_identity_service())
                 .data(db::new_pool())
                 .configure(routes),
         )
-        .await;
+        .await
+    }
+
+    /// Helper for HTTP GET integration tests
+    pub async fn test_get<R>(route: &str) -> (u16, R)
+    where
+        R: DeserializeOwned,
+    {
+        let mut app = get_service().await;
 
         let res =
             test::call_service(&mut app, test::TestRequest::get().uri(route).to_request()).await;
@@ -44,13 +51,7 @@ pub mod tests {
     where
         R: DeserializeOwned,
     {
-        let mut app = test::init_service(
-            App::new()
-                .wrap(get_identity_service())
-                .data(db::new_pool())
-                .configure(routes),
-        )
-        .await;
+        let mut app = get_service().await;
         let res = test::call_service(
             &mut app,
             test::TestRequest::post()
