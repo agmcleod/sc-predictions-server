@@ -64,8 +64,16 @@ where
                 Ok(res)
             })
         } else {
+            // Box::pin(async move {
+            //     Ok(req.into_response(HttpResponse::Unauthorized().finish().into_body()))
+            // })
+
             Box::pin(async move {
-                Ok(req.into_response(HttpResponse::Unauthorized().finish().into_body()))
+                Ok(req.into_response(
+                    HttpResponse::Unauthorized()
+                        .json::<errors::ErrorResponse>("Unauthorized".into())
+                        .into_body(),
+                ))
             })
         }
     }

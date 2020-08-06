@@ -1,14 +1,17 @@
-use actix_web::{web, HttpResponse, Result};
+use actix_web::{
+    web::{block, Data, Json},
+    Result,
+};
 
 use crate::db::{get_conn, models::Question, PgPool};
 use crate::errors::Error;
 
-pub async fn get_all(pool: web::Data<PgPool>) -> Result<HttpResponse, Error> {
+pub async fn get_all(pool: Data<PgPool>) -> Result<Json<Vec<Question>>, Error> {
     let connection = get_conn(&pool).unwrap();
 
-    let questions = Question::get_all(&connection)?;
+    let questions = block(move || Question::get_all(&connection)).await?;
 
-    Ok(HttpResponse::Ok().json(questions))
+    Ok(Json(questions))
 }
 
 #[cfg(test)]
@@ -27,7 +30,7 @@ mod tests {
 
     #[actix_rt::test]
     async fn test_questions_empty() {
-        let res: (u16, Vec<Question>) = test_get("/api/questions").await;
+        let res: (u16, Vec<Question>) = test_get("/api/questions", None).await;
         assert_eq!(res.0, 200);
 
         assert_eq!(res.1.len(), 0);
@@ -45,7 +48,7 @@ mod tests {
             .execute(&conn)
             .unwrap();
 
-        let res = test_get("/api/questions").await;
+        let res = test_get("/api/questions", None).await;
         assert_eq!(res.0, 200);
 
         let body: Vec<Question> = res.1;

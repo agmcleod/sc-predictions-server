@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::errors::Error;
 
-const SESSION_NAME: &str = "auth";
+pub const SESSION_NAME: &str = "auth";
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PrivateClaim {
@@ -46,7 +46,7 @@ pub fn identity_matches_game_id(id: Identity, game_id: i32) -> Result<(), Error>
     let token = id.identity().unwrap();
     let claim = decode_jwt(&token)?;
     if game_id != claim.game_id {
-        return Err(Error::Unauthorized);
+        return Err(Error::Forbidden);
     }
 
     Ok(())

@@ -1,5 +1,8 @@
 use actix_identity::Identity;
-use actix_web::{web, HttpResponse, Result};
+use actix_web::{
+    web::{block, Data, Json},
+    Result,
+};
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
@@ -21,25 +24,29 @@ pub struct JoinRequest {
 
 pub async fn join(
     id: Identity,
-    pool: web::Data<PgPool>,
-    params: web::Json<JoinRequest>,
-) -> Result<HttpResponse, Error> {
+    pool: Data<PgPool>,
+    params: Json<JoinRequest>,
+) -> Result<Json<User>, Error> {
     validate(&params)?;
     let connection = get_conn(&pool).unwrap();
-    let game = Game::find_by_slug(&connection, &params.slug)?;
-    if game.locked {
-        return Err(Error::NotFound("Game is locked".to_string()));
-    }
-    if User::find_by_game_id_and_name(&connection, game.id, &params.name).is_ok() {
-        return Err(Error::UnprocessableEntity("Username is taken".to_string()));
-    }
-    let user = User::create(&connection, params.name.clone(), game.id)?;
+
+    let user = block(move || {
+        let game = Game::find_by_slug(&connection, &params.slug)?;
+        if game.locked {
+            return Err(Error::NotFound("Game is locked".to_string()));
+        }
+        if User::find_by_game_id_and_name(&connection, game.id, &params.name).is_ok() {
+            return Err(Error::UnprocessableEntity("Username is taken".to_string()));
+        }
+        User::create(&connection, params.name.clone(), game.id)
+    })
+    .await?;
 
     if let Some(token) = &user.session_id {
         id.remember(token.clone());
     }
 
-    Ok(HttpResponse::Ok().json(user))
+    Ok(Json(user))
 }
 
 #[cfg(test)]
@@ -89,6 +96,7 @@ mod tests {
                 name: "agmcleod".to_string(),
                 slug: game.slug.unwrap(),
             },
+            None,
         )
         .await;
 
@@ -110,6 +118,7 @@ mod tests {
                 name: "agmcleod".to_string(),
                 slug: "-fake-".to_string(),
             },
+            None,
         )
         .await;
 
@@ -135,6 +144,7 @@ mod tests {
                 slug: "sluggd".to_string(),
                 name: "agmcleod".to_string(),
             },
+            None,
         )
         .await;
 
@@ -171,6 +181,7 @@ mod tests {
                 slug: "newgam".to_string(),
                 name: "agmcleod".to_string(),
             },
+            None,
         )
         .await;
 

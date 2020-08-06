@@ -1,5 +1,8 @@
 use actix_identity::Identity;
-use actix_web::{web, HttpResponse, Result};
+use actix_web::{
+    web::{block, Data, Json},
+    Result,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::db::{
@@ -14,10 +17,7 @@ pub struct CreateGameRequest {
     question_ids: Vec<i32>,
 }
 
-fn create_db_records(
-    pool: web::Data<PgPool>,
-    params: web::Json<CreateGameRequest>,
-) -> Result<Game, Error> {
+fn create_db_records(pool: Data<PgPool>, params: Json<CreateGameRequest>) -> Result<Game, Error> {
     use diesel::connection::Connection;
     let connection = get_conn(&pool).unwrap();
 
@@ -34,16 +34,16 @@ fn create_db_records(
 
 pub async fn create(
     id: Identity,
-    pool: web::Data<PgPool>,
-    params: web::Json<CreateGameRequest>,
-) -> Result<HttpResponse, Error> {
-    let game = web::block(move || create_db_records(pool, params)).await?;
+    pool: Data<PgPool>,
+    params: Json<CreateGameRequest>,
+) -> Result<Json<Game>, Error> {
+    let game = block(move || create_db_records(pool, params)).await?;
 
     if let Some(token) = &game.creator {
         id.remember(token.clone());
     }
 
-    Ok(HttpResponse::Ok().json(game))
+    Ok(Json(game))
 }
 
 #[cfg(test)]
@@ -74,6 +74,7 @@ mod tests {
             CreateGameRequest {
                 question_ids: vec![question.id],
             },
+            None,
         )
         .await;
 
@@ -88,14 +89,10 @@ mod tests {
 
         assert_eq!(gqs.len(), 1);
 
-        diesel::delete(game_questions::dsl::game_questions)
+        diesel::delete(game_questions::table)
             .execute(&conn)
             .unwrap();
-        diesel::delete(games::dsl::games.filter(games::dsl::id.eq(game.id)))
-            .execute(&conn)
-            .unwrap();
-        diesel::delete(questions::dsl::questions.filter(questions::dsl::id.eq_any(gqs)))
-            .execute(&conn)
-            .unwrap();
+        diesel::delete(games::table).execute(&conn).unwrap();
+        diesel::delete(questions::table).execute(&conn).unwrap();
     }
 }

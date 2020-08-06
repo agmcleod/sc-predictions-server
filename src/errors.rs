@@ -16,6 +16,7 @@ pub enum Error {
     CannotEncodeJwtToken(String),
     InternalServerError(String),
     Unauthorized,
+    Forbidden,
     NotFound(String),
     PoolError(String),
     #[display(fmt = "")]
@@ -46,9 +47,7 @@ impl ResponseError for Error {
             Error::UnprocessableEntity(message) => {
                 HttpResponse::UnprocessableEntity().json::<ErrorResponse>(message.into())
             }
-            Error::Unauthorized => {
-                HttpResponse::Unauthorized().json::<ErrorResponse>("Unauthorized".into())
-            }
+            Error::Forbidden => HttpResponse::Forbidden().json::<ErrorResponse>("Forbidden".into()),
             _ => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
         }
     }
