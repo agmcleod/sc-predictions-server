@@ -80,8 +80,6 @@ mod tests {
 
         assert_eq!(res.0, 200);
 
-        let game: Game = res.1;
-
         let gqs = game_questions::dsl::game_questions
             .select(game_questions::dsl::id)
             .load::<i32>(&conn)
