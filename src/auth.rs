@@ -1,13 +1,16 @@
 use std::env;
 
-use actix_identity::{CookieIdentityPolicy, Identity, IdentityService};
+use actix_identity::{Identity, IdentityPolicy, IdentityService};
+use actix_web::{
+    dev::{ServiceRequest, ServiceResponse},
+    error,
+};
 use chrono::{Duration, Utc};
+use futures_util::future::{ok, Ready};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 
 use crate::errors::Error;
-
-pub const SESSION_NAME: &str = "auth";
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PrivateClaim {
@@ -26,6 +29,47 @@ impl PrivateClaim {
             exp: (Utc::now() + Duration::hours(3)).timestamp(),
         }
     }
+
+    #[cfg(test)]
+    pub fn set_exp(&mut self, exp: i64) {
+        self.exp = exp;
+    }
+}
+
+pub struct AuthHeaderIdentityPolicy;
+
+impl AuthHeaderIdentityPolicy {
+    fn new() -> Self {
+        AuthHeaderIdentityPolicy {}
+    }
+}
+
+impl IdentityPolicy for AuthHeaderIdentityPolicy {
+    type Future = Ready<Result<Option<String>, error::Error>>;
+    type ResponseFuture = Ready<Result<(), error::Error>>;
+
+    fn from_request(&self, request: &mut ServiceRequest) -> Self::Future {
+        let mut token: Option<String> = None;
+        let auth_token = request.headers().get("Authorization");
+
+        if let Some(auth_token) = auth_token {
+            let token_string = auth_token.to_str();
+            if token_string.is_ok() {
+                token = Some(String::from(token_string.unwrap()).replace("Bearer ", ""));
+            }
+        }
+
+        ok(token)
+    }
+
+    fn to_response<B>(
+        &self,
+        _identity: Option<String>,
+        _changed: bool,
+        _response: &mut ServiceResponse<B>,
+    ) -> Self::ResponseFuture {
+        ok(())
+    }
 }
 
 pub fn create_jwt(private_claim: PrivateClaim) -> Result<String, Error> {
@@ -42,6 +86,10 @@ pub fn decode_jwt(token: &str) -> Result<PrivateClaim, Error> {
         .map_err(|e| Error::CannotDecodeJwtToken(e.to_string()))
 }
 
+pub fn get_identity_service() -> IdentityService<AuthHeaderIdentityPolicy> {
+    IdentityService::new(AuthHeaderIdentityPolicy::new())
+}
+
 pub fn identity_matches_game_id(id: Identity, game_id: i32) -> Result<(), Error> {
     let token = id.identity().unwrap();
     let claim = decode_jwt(&token)?;
@@ -50,16 +98,6 @@ pub fn identity_matches_game_id(id: Identity, game_id: i32) -> Result<(), Error>
     }
 
     Ok(())
-}
-
-pub fn get_identity_service() -> IdentityService<CookieIdentityPolicy> {
-    IdentityService::new(
-        CookieIdentityPolicy::new(&env::var("SESSION_KEY").unwrap().as_ref())
-            .name(SESSION_NAME)
-            .max_age_time(Duration::minutes(20))
-            // allow to transmit over http
-            .secure(false),
-    )
 }
 
 #[cfg(test)]

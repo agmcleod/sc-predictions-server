@@ -1,22 +1,15 @@
 #[cfg(test)]
 pub mod tests {
-    use std::env;
     use std::time::SystemTime;
 
     use actix_http::Request;
     use actix_identity::Identity;
     use actix_service::Service;
-    use actix_web::{
-        body::Body,
-        cookie::{Cookie, CookieJar, Key},
-        dev::ServiceResponse,
-        error::Error,
-        test, App, FromRequest,
-    };
+    use actix_web::{body::Body, dev::ServiceResponse, error::Error, test, App, FromRequest};
     use serde::{de::DeserializeOwned, Deserialize, Serialize};
     use serde_json;
 
-    use crate::auth::{create_jwt, get_identity_service, PrivateClaim, SESSION_NAME};
+    use crate::auth::{create_jwt, get_identity_service, PrivateClaim};
     use crate::db;
     use crate::routes::routes;
 
@@ -41,14 +34,14 @@ pub mod tests {
     }
 
     /// Helper for HTTP GET integration tests
-    pub async fn test_get<R>(route: &str, cookie: Option<Cookie<'static>>) -> (u16, R)
+    pub async fn test_get<R>(route: &str, token: Option<String>) -> (u16, R)
     where
         R: DeserializeOwned,
     {
         let mut app = get_service().await;
         let mut req = test::TestRequest::get().uri(route);
-        if let Some(cookie) = cookie {
-            req = req.cookie(cookie);
+        if let Some(token) = token {
+            req = req.header("Authorization", token);
         }
 
         let res = test::call_service(&mut app, req.to_request()).await;
@@ -70,7 +63,7 @@ pub mod tests {
     pub async fn test_post<T: Serialize, R>(
         route: &str,
         params: T,
-        cookie: Option<Cookie<'static>>,
+        token: Option<String>,
     ) -> (u16, R)
     where
         R: DeserializeOwned,
@@ -78,8 +71,8 @@ pub mod tests {
         let mut app = get_service().await;
 
         let mut req = test::TestRequest::post().set_json(&params).uri(route);
-        if let Some(cookie) = cookie {
-            req = req.cookie(cookie);
+        if let Some(token) = token {
+            req = req.header("Authorization", token);
         }
 
         let res = test::call_service(&mut app, req.to_request()).await;
@@ -106,32 +99,7 @@ pub mod tests {
             .unwrap()
     }
 
-    pub fn get_login_cookie(
-        private_claim: PrivateClaim,
-        login_timestamp: Option<SystemTime>,
-    ) -> Cookie<'static> {
-        let login_time = login_timestamp.unwrap_or_else(|| SystemTime::now());
-        let identity = create_jwt(private_claim).unwrap();
-
-        let mut jar = CookieJar::new();
-        let key: Vec<u8> = env::var("SESSION_KEY")
-            .unwrap()
-            .into_bytes()
-            .iter()
-            .chain([1, 0, 0, 0].iter())
-            .copied()
-            .collect();
-
-        jar.private(&Key::from_master(&key)).add(Cookie::new(
-            SESSION_NAME,
-            serde_json::to_string(&CookieValue {
-                identity,
-                login_timestamp: Some(login_time),
-                visit_timestamp: None,
-            })
-            .unwrap(),
-        ));
-
-        jar.get(SESSION_NAME).unwrap().clone()
+    pub fn get_auth_token(private_claim: PrivateClaim) -> String {
+        create_jwt(private_claim).unwrap()
     }
 }

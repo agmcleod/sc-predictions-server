@@ -55,19 +55,15 @@ where
     fn call(&mut self, req: ServiceRequest) -> Self::Future {
         let identity = RequestIdentity::get_identity(&req).unwrap_or("".into());
         let private_claim: Result<PrivateClaim, errors::Error> = decode_jwt(&identity);
-        let is_logged_in = private_claim.is_ok();
 
-        if is_logged_in {
+        // decode uses default validation to ensure not expired, changed, etc.
+        if private_claim.is_ok() {
             let fut = self.service.call(req);
             Box::pin(async move {
                 let res = fut.await?;
                 Ok(res)
             })
         } else {
-            // Box::pin(async move {
-            //     Ok(req.into_response(HttpResponse::Unauthorized().finish().into_body()))
-            // })
-
             Box::pin(async move {
                 Ok(req.into_response(
                     HttpResponse::Unauthorized()
@@ -76,5 +72,26 @@ where
                 ))
             })
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use chrono::{Duration, Utc};
+
+    use crate::auth::PrivateClaim;
+    use crate::errors::ErrorResponse;
+    use crate::tests::helpers::tests::{get_auth_token, test_get};
+
+    #[actix_rt::test]
+    async fn test_expired_token_unauthorized() {
+        let mut claim = PrivateClaim::new(1, "".to_string(), 1);
+        claim.set_exp((Utc::now() - Duration::minutes(1)).timestamp());
+        let cookie = get_auth_token(claim);
+        let res = test_get(&format!("/api/games/{}/players", 1), Some(cookie)).await;
+        assert_eq!(res.0, 401);
+
+        let body: ErrorResponse = res.1;
+        assert_eq!(body.errors.get(0).unwrap(), "Unauthorized");
     }
 }

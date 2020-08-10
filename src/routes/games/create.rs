@@ -1,4 +1,3 @@
-use actix_identity::Identity;
 use actix_web::{
     web::{block, Data, Json},
     Result,
@@ -33,15 +32,10 @@ fn create_db_records(pool: Data<PgPool>, params: Json<CreateGameRequest>) -> Res
 }
 
 pub async fn create(
-    id: Identity,
     pool: Data<PgPool>,
     params: Json<CreateGameRequest>,
 ) -> Result<Json<Game>, Error> {
     let game = block(move || create_db_records(pool, params)).await?;
-
-    if let Some(token) = &game.creator {
-        id.remember(token.clone());
-    }
 
     Ok(Json(game))
 }
@@ -69,7 +63,7 @@ mod tests {
             .get_result::<Question>(&conn)
             .unwrap();
 
-        let res = test_post(
+        let res: (u16, Game) = test_post(
             "/api/games",
             CreateGameRequest {
                 question_ids: vec![question.id],

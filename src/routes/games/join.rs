@@ -1,4 +1,3 @@
-use actix_identity::Identity;
 use actix_web::{
     web::{block, Data, Json},
     Result,
@@ -22,11 +21,7 @@ pub struct JoinRequest {
     slug: String,
 }
 
-pub async fn join(
-    id: Identity,
-    pool: Data<PgPool>,
-    params: Json<JoinRequest>,
-) -> Result<Json<User>, Error> {
+pub async fn join(pool: Data<PgPool>, params: Json<JoinRequest>) -> Result<Json<User>, Error> {
     validate(&params)?;
     let connection = get_conn(&pool).unwrap();
 
@@ -41,10 +36,6 @@ pub async fn join(
         User::create(&connection, params.name.clone(), game.id)
     })
     .await?;
-
-    if let Some(token) = &user.session_id {
-        id.remember(token.clone());
-    }
 
     Ok(Json(user))
 }

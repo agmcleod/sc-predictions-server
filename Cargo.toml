@@ -29,3 +29,4 @@ serde_derive = "1.0.80"
 uuid = { version = "0.5", features = ["serde"] }
 validator = "0.8.0"
 validator_derive = "0.8.0"
+futures-util = "0.3.5"

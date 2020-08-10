@@ -31,7 +31,7 @@ mod tests {
     };
     use crate::errors::ErrorResponse;
     use crate::schema::{games, users};
-    use crate::tests::helpers::tests::{get_login_cookie, test_get};
+    use crate::tests::helpers::tests::{get_auth_token, test_get};
 
     #[derive(Insertable)]
     #[table_name = "users"]
@@ -77,7 +77,7 @@ mod tests {
             .execute(&conn)
             .unwrap();
 
-        let cookie = get_login_cookie(PrivateClaim::new(user.id, user.user_name, game.id), None);
+        let cookie = get_auth_token(PrivateClaim::new(user.id, user.user_name, game.id));
         let res = test_get(&format!("/api/games/{}/players", game.id), Some(cookie)).await;
         assert_eq!(res.0, 200);
 
@@ -117,11 +117,8 @@ mod tests {
             .execute(&conn)
             .unwrap();
 
-        let cookie = get_login_cookie(
-            PrivateClaim::new(game.id, game.slug.unwrap(), game.id),
-            None,
-        );
-        let res = test_get(&format!("/api/games/{}/players", game.id), Some(cookie)).await;
+        let token = get_auth_token(PrivateClaim::new(game.id, game.slug.unwrap(), game.id));
+        let res = test_get(&format!("/api/games/{}/players", game.id), Some(token)).await;
         assert_eq!(res.0, 200);
 
         let body: Vec<User> = res.1;
@@ -144,7 +141,7 @@ mod tests {
             .get_result(&conn)
             .unwrap();
 
-        let cookie = get_login_cookie(PrivateClaim::new(1, "".to_string(), game.id + 1), None);
+        let cookie = get_auth_token(PrivateClaim::new(1, "".to_string(), game.id + 1));
         let res = test_get(&format!("/api/games/{}/players", game.id), Some(cookie)).await;
         assert_eq!(res.0, 403);
 
