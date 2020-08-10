@@ -32,6 +32,14 @@ impl Game {
         Ok(updated_game)
     }
 
+    pub fn find_by_id(conn: &PgConnection, id: i32) -> Result<Game, Error> {
+        use crate::schema::games::dsl::games;
+
+        let game = games.find(id).first(conn)?;
+
+        Ok(game)
+    }
+
     pub fn find_by_slug(conn: &PgConnection, slug_value: &String) -> Result<Game, Error> {
         use crate::schema::games::dsl::{games, slug};
 

@@ -90,15 +90,6 @@ pub mod tests {
         (status, json_body)
     }
 
-    pub async fn get_identity() -> Identity {
-        let (request, mut payload) =
-            test::TestRequest::with_header("content-type", "application/json").to_http_parts();
-        Option::<Identity>::from_request(&request, &mut payload)
-            .await
-            .unwrap()
-            .unwrap()
-    }
-
     pub fn get_auth_token(private_claim: PrivateClaim) -> String {
         create_jwt(private_claim).unwrap()
     }

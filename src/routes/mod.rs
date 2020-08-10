@@ -16,6 +16,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     .service(
                         web::scope("/{id}")
                             .wrap(Auth)
+                            .route("", web::get().to(games::status))
                             .route("/players", web::get().to(games::get_players)),
                     ),
             ),
