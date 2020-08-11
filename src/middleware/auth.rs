@@ -79,13 +79,13 @@ where
 mod tests {
     use chrono::{Duration, Utc};
 
-    use crate::auth::PrivateClaim;
+    use crate::auth::{PrivateClaim, Role};
     use crate::errors::ErrorResponse;
     use crate::tests::helpers::tests::{get_auth_token, test_get};
 
     #[actix_rt::test]
     async fn test_expired_token_unauthorized() {
-        let mut claim = PrivateClaim::new(1, "".to_string(), 1);
+        let mut claim = PrivateClaim::new(1, "".to_string(), 1, Role::Owner);
         claim.set_exp((Utc::now() - Duration::minutes(1)).timestamp());
         let cookie = get_auth_token(claim);
         let res = test_get(&format!("/api/games/{}/players", 1), Some(cookie)).await;

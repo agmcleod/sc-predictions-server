@@ -12,20 +12,28 @@ use serde::{Deserialize, Serialize};
 
 use crate::errors::Error;
 
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+pub enum Role {
+    Player,
+    Owner,
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct PrivateClaim {
     pub id: i32,
     pub user_name: String,
     pub game_id: i32,
+    pub role: Role,
     exp: i64,
 }
 
 impl PrivateClaim {
-    pub fn new(id: i32, user_name: String, game_id: i32) -> Self {
+    pub fn new(id: i32, user_name: String, game_id: i32, role: Role) -> Self {
         PrivateClaim {
             id,
             user_name,
             game_id,
+            role,
             exp: (Utc::now() + Duration::hours(3)).timestamp(),
         }
     }
@@ -102,18 +110,18 @@ pub fn identity_matches_game_id(id: Identity, game_id: i32) -> Result<(), Error>
 
 #[cfg(test)]
 mod tests {
-    use crate::auth::{create_jwt, decode_jwt, PrivateClaim};
+    use super::{create_jwt, decode_jwt, PrivateClaim, Role};
 
     #[test]
     fn test_creates_jwt() {
-        let private_claim = PrivateClaim::new(1, "agmcleod".to_string(), 1);
+        let private_claim = PrivateClaim::new(1, "agmcleod".to_string(), 1, Role::Player);
         let jwt = create_jwt(private_claim);
         assert!(jwt.is_ok());
     }
 
     #[test]
     fn test_decodes_jwt() {
-        let private_claim = PrivateClaim::new(1, "agmcleod".to_string(), 2);
+        let private_claim = PrivateClaim::new(1, "agmcleod".to_string(), 2, Role::Owner);
         let jwt = create_jwt(private_claim.clone()).unwrap();
         let decoded = decode_jwt(&jwt).unwrap();
         assert_eq!(private_claim, decoded);

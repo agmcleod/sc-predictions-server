@@ -7,11 +7,11 @@ pub fn create_slug_from_id(id: i32) -> String {
     let id = format!("{}", id);
     let r = radix::RadixNum::from_str(&id, 10).unwrap();
     let r = r.with_radix(36).unwrap();
-    let slug = r.as_str();
+    let mut slug = r.as_str().to_string();
     if 6i32 - slug.len() as i32 > 0 {
         let len = 6 - slug.len();
         let mut rng = thread_rng();
-        return format!(
+        slug = format!(
             "{}{}",
             slug,
             iter::repeat(())
@@ -21,7 +21,7 @@ pub fn create_slug_from_id(id: i32) -> String {
         );
     }
 
-    slug.to_string().to_uppercase()
+    slug.to_uppercase()
 }
 
 #[cfg(test)]

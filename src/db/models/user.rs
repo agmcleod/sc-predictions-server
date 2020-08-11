@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use diesel::{ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
-use crate::auth::{create_jwt, PrivateClaim};
+use crate::auth::{create_jwt, PrivateClaim, Role};
 use crate::errors::Error;
 use crate::schema::users;
 
@@ -36,7 +36,12 @@ impl User {
             .values(NewUser { user_name, game_id })
             .get_result(connection)?;
 
-        let jwt = create_jwt(PrivateClaim::new(result.id, result.user_name, game_id))?;
+        let jwt = create_jwt(PrivateClaim::new(
+            result.id,
+            result.user_name,
+            game_id,
+            Role::Player,
+        ))?;
         let result: User = diesel::update(table)
             .set(dsl::session_id.eq(jwt))
             .get_result(connection)?;

@@ -2,7 +2,7 @@ use chrono::{DateTime, Utc};
 use diesel::{self, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
-use crate::auth::{create_jwt, PrivateClaim};
+use crate::auth::{create_jwt, PrivateClaim, Role};
 use crate::errors::Error;
 use crate::utils::create_slug_from_id;
 
@@ -24,7 +24,12 @@ impl Game {
             .default_values()
             .get_result(conn)?;
         let new_slug = create_slug_from_id(game.id);
-        let jwt = create_jwt(PrivateClaim::new(game.id, new_slug.clone(), game.id))?;
+        let jwt = create_jwt(PrivateClaim::new(
+            game.id,
+            new_slug.clone(),
+            game.id,
+            Role::Owner,
+        ))?;
         let updated_game = diesel::update(dsl::games.find(game.id))
             .set((dsl::slug.eq(new_slug), dsl::creator.eq(jwt)))
             .get_result::<Game>(conn)?;
