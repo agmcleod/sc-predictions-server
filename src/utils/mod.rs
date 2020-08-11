@@ -21,7 +21,7 @@ pub fn create_slug_from_id(id: i32) -> String {
         );
     }
 
-    slug.to_string()
+    slug.to_string().to_uppercase()
 }
 
 #[cfg(test)]

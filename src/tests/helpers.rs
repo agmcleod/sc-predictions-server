@@ -3,9 +3,8 @@ pub mod tests {
     use std::time::SystemTime;
 
     use actix_http::Request;
-    use actix_identity::Identity;
     use actix_service::Service;
-    use actix_web::{body::Body, dev::ServiceResponse, error::Error, test, App, FromRequest};
+    use actix_web::{body::Body, dev::ServiceResponse, error::Error, test, App};
     use serde::{de::DeserializeOwned, Deserialize, Serialize};
     use serde_json;
 
