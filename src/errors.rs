@@ -48,7 +48,11 @@ impl ResponseError for Error {
                 HttpResponse::UnprocessableEntity().json::<ErrorResponse>(message.into())
             }
             Error::Forbidden => HttpResponse::Forbidden().json::<ErrorResponse>("Forbidden".into()),
-            _ => HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR),
+            _ => {
+                error!("Internal server error: {:?}", self);
+                HttpResponse::InternalServerError()
+                    .json::<ErrorResponse>("Internal Server Error".into())
+            }
         }
     }
 }

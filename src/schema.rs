@@ -11,11 +11,11 @@ table! {
 table! {
     games (id) {
         id -> Int4,
-        creator -> Nullable<Text>,
         locked -> Bool,
         slug -> Nullable<Varchar>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        creator -> Nullable<Text>,
     }
 }
 

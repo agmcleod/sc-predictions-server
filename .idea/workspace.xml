@@ -26,18 +26,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players">
-      <change afterPath="$PROJECT_DIR$/src/db/models/round.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/routes/rounds/create.rs" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/routes/rounds/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sc-predictions-server.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sc-predictions-server.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/auth.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/auth.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/get_players.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/get_players.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/status.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/status.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/errors.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/errors.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/routes/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/schema.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/tests/helpers.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/tests/helpers.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -172,10 +164,10 @@
     </state>
     <state x="2529" y="329" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596570477431" />
     <state x="1089" y="614" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595957243546" />
-    <state x="987" y="299" width="585" height="801" key="find.popup" timestamp="1597245699910">
-      <screen x="0" y="0" width="2560" height="1400" />
+    <state x="555" y="210" width="568" height="502" key="find.popup" timestamp="1597259489101">
+      <screen x="0" y="23" width="1440" height="877" />
     </state>
-    <state x="555" y="210" width="568" height="502" key="find.popup/0.23.1440.877@0.23.1440.877" timestamp="1597173699760" />
+    <state x="555" y="210" width="568" height="502" key="find.popup/0.23.1440.877@0.23.1440.877" timestamp="1597259489101" />
     <state x="987" y="299" width="585" height="801" key="find.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1597245699910" />
     <state x="936" y="330" width="672" height="677" key="run.anything.popup" timestamp="1595946611621">
       <screen x="0" y="0" width="2560" height="1400" />

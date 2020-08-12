@@ -9,7 +9,7 @@ use std::env;
 
 use actix_cors::Cors;
 use actix_rt;
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use env_logger;
 
@@ -23,6 +23,7 @@ mod tests;
 mod utils;
 mod validate;
 
+use errors::ErrorResponse;
 use routes::routes;
 
 #[actix_rt::main]
@@ -45,6 +46,10 @@ async fn main() -> std::io::Result<()> {
             .wrap(auth::get_identity_service())
             .data(pool.clone())
             .configure(routes)
+            .default_service(
+                web::route()
+                    .to(|| HttpResponse::NotFound().json::<ErrorResponse>("Not Found".into())),
+            )
     })
     .bind("0.0.0.0:8080")?
     .run()
