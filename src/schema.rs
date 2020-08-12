@@ -29,6 +29,17 @@ table! {
 }
 
 table! {
+    rounds (id) {
+        id -> Int4,
+        player_one -> Varchar,
+        player_two -> Varchar,
+        game_id -> Int4,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         user_name -> Varchar,
@@ -42,11 +53,13 @@ table! {
 
 joinable!(game_questions -> games (game_id));
 joinable!(game_questions -> questions (question_id));
+joinable!(rounds -> games (game_id));
 joinable!(users -> games (game_id));
 
 allow_tables_to_appear_in_same_query!(
     game_questions,
     games,
     questions,
+    rounds,
     users,
 );

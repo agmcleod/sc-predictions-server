@@ -31,7 +31,7 @@ pub async fn status(
 mod tests {
     use diesel::{self, RunQueryDsl};
 
-    use crate::auth::PrivateClaim;
+    use crate::auth::{PrivateClaim, Role};
     use crate::db::{get_conn, models::Game, new_pool};
     use crate::schema::games;
     use crate::tests::helpers::tests::{get_auth_token, test_get};
@@ -56,7 +56,12 @@ mod tests {
             .get_result(&conn)
             .unwrap();
 
-        let token = get_auth_token(PrivateClaim::new(game.id, game.slug.unwrap(), game.id));
+        let token = get_auth_token(PrivateClaim::new(
+            game.id,
+            game.slug.unwrap(),
+            game.id,
+            Role::Owner,
+        ));
         let res: (u16, StatusResponse) =
             test_get(&format!("/api/games/{}", game.id), Some(token)).await;
         assert_eq!(res.0, 200);

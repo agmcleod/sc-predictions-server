@@ -49,9 +49,10 @@ pub mod tests {
         let body = test::read_body(res).await;
         let json_body = serde_json::from_slice(&body).unwrap_or_else(|_| {
             panic!(
-                "read_response_json failed during deserialization. response: {}",
+                "read_response_json failed during deserialization. response: {} status: {}",
                 String::from_utf8(body.to_vec())
-                    .unwrap_or_else(|_| "Could not convert Bytes -> String".to_string())
+                    .unwrap_or_else(|_| "Could not convert Bytes -> String".to_string()),
+                status
             )
         });
 
@@ -80,9 +81,10 @@ pub mod tests {
         let body = test::read_body(res).await;
         let json_body = serde_json::from_slice(&body).unwrap_or_else(|_| {
             panic!(
-                "read_response_json failed during deserialization. response: {}",
+                "read_response_json failed during deserialization. response: {} status: {}",
                 String::from_utf8(body.to_vec())
-                    .unwrap_or_else(|_| "Could not convert Bytes -> String".to_string())
+                    .unwrap_or_else(|_| "Could not convert Bytes -> String".to_string()),
+                status
             )
         });
 

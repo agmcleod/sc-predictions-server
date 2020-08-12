@@ -37,6 +37,12 @@
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/typenum-397d49ac6967aeb0/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/regex-744a7ad93a5d082d/out" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/target/debug/build/pq-sys-46a661833a11d8fa/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/ring-66641823813a780d/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/winapi-ddd77a2c58c093fc/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/num-bigint-889f8999edaf3e88/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/num-integer-e2a2e70678c384f4/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/num-traits-495d824f159d5d5c/out" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/target/debug/build/brotli-sys-ebd76d9d668bd4d3/out" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="inheritedJdk" />

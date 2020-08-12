@@ -23,7 +23,7 @@ pub async fn get_players(
 mod tests {
     use diesel::{self, RunQueryDsl};
 
-    use crate::auth::PrivateClaim;
+    use crate::auth::{PrivateClaim, Role};
     use crate::db::{
         get_conn,
         models::{Game, User},
@@ -77,7 +77,12 @@ mod tests {
             .execute(&conn)
             .unwrap();
 
-        let cookie = get_auth_token(PrivateClaim::new(user.id, user.user_name, game.id));
+        let cookie = get_auth_token(PrivateClaim::new(
+            user.id,
+            user.user_name,
+            game.id,
+            Role::Owner,
+        ));
         let res = test_get(&format!("/api/games/{}/players", game.id), Some(cookie)).await;
         assert_eq!(res.0, 200);
 
@@ -117,7 +122,12 @@ mod tests {
             .execute(&conn)
             .unwrap();
 
-        let token = get_auth_token(PrivateClaim::new(game.id, game.slug.unwrap(), game.id));
+        let token = get_auth_token(PrivateClaim::new(
+            game.id,
+            game.slug.unwrap(),
+            game.id,
+            Role::Player,
+        ));
         let res = test_get(&format!("/api/games/{}/players", game.id), Some(token)).await;
         assert_eq!(res.0, 200);
 
@@ -141,7 +151,12 @@ mod tests {
             .get_result(&conn)
             .unwrap();
 
-        let cookie = get_auth_token(PrivateClaim::new(1, "".to_string(), game.id + 1));
+        let cookie = get_auth_token(PrivateClaim::new(
+            1,
+            "".to_string(),
+            game.id + 1,
+            Role::Player,
+        ));
         let res = test_get(&format!("/api/games/{}/players", game.id), Some(cookie)).await;
         assert_eq!(res.0, 403);
 

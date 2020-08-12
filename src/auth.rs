@@ -98,9 +98,16 @@ pub fn get_identity_service() -> IdentityService<AuthHeaderIdentityPolicy> {
     IdentityService::new(AuthHeaderIdentityPolicy::new())
 }
 
+pub fn get_claim_from_identity(id: Identity) -> Result<(PrivateClaim, String), Error> {
+    if let Some(token) = id.identity() {
+        let claim = decode_jwt(&token)?;
+        return Ok((claim, token));
+    }
+    Err(Error::Unauthorized)
+}
+
 pub fn identity_matches_game_id(id: Identity, game_id: i32) -> Result<(), Error> {
-    let token = id.identity().unwrap();
-    let claim = decode_jwt(&token)?;
+    let (claim, _) = get_claim_from_identity(id)?;
     if game_id != claim.game_id {
         return Err(Error::Forbidden);
     }
