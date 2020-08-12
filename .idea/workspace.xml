@@ -27,9 +27,12 @@
   <component name="ChangeListManager">
     <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204555_create_games/up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/migrations/2020-07-21-204555_create_games/up.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db/models/game.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/game.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db/models/round.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/round.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/errors.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/errors.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/main.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/games/status.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/status.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/schema.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

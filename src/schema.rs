@@ -36,6 +36,7 @@ table! {
         game_id -> Int4,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
+        locked -> Bool,
     }
 }
 

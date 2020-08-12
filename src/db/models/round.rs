@@ -2,10 +2,12 @@ use chrono::{DateTime, Utc};
 use diesel::{self, PgConnection, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
+use crate::db::models::Game;
 use crate::errors::Error;
 use crate::schema::rounds::{self, table};
 
-#[derive(Debug, Deserialize, Serialize, Queryable)]
+#[derive(Associations, Debug, Deserialize, Identifiable, Serialize, Queryable)]
+#[belongs_to(Game)]
 pub struct Round {
     pub id: i32,
     pub player_one: String,
@@ -13,6 +15,7 @@ pub struct Round {
     pub game_id: i32,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub locked: bool,
 }
 
 #[derive(Insertable)]

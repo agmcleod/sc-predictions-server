@@ -4,21 +4,22 @@ use serde::{Deserialize, Serialize};
 
 use crate::auth::{create_jwt, PrivateClaim, Role};
 use crate::errors::Error;
+use crate::schema::games;
 use crate::utils::create_slug_from_id;
 
-#[derive(Debug, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Identifiable, Serialize, Deserialize, Queryable)]
 pub struct Game {
     pub id: i32,
-    pub creator: Option<String>,
     pub locked: bool,
     pub slug: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub creator: Option<String>,
 }
 
 impl Game {
     pub fn create(conn: &PgConnection) -> Result<Game, Error> {
-        use crate::schema::games::{dsl, table};
+        use games::{dsl, table};
 
         let game: Game = diesel::insert_into(table)
             .default_values()
