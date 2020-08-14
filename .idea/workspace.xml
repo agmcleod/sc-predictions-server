@@ -26,13 +26,14 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players">
+      <change afterPath="$PROJECT_DIR$/src/routes/rounds/status.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204555_create_games/up.sql" beforeDir="false" afterPath="$PROJECT_DIR$/migrations/2020-07-21-204555_create_games/up.sql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/game.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/game.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db/models/game_question.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/game_question.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/db/models/question.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/question.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/db/models/round.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/db/models/round.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/errors.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/errors.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/status.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/games/status.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/schema.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/rounds/create.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/rounds/create.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/routes/rounds/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/src/routes/rounds/mod.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -99,7 +100,14 @@
       <option name="project" value="LOCAL" />
       <updated>1596570458713</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="return open round status for a game">
+      <created>1597266216032</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1597266216033</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -117,7 +125,8 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="compiling with actix 2 &amp; diesel" />
     <MESSAGE value="working on auth flow, trying to get tests for get_players" />
-    <option name="LAST_COMMIT_MESSAGE" value="working on auth flow, trying to get tests for get_players" />
+    <MESSAGE value="return open round status for a game" />
+    <option name="LAST_COMMIT_MESSAGE" value="return open round status for a game" />
   </component>
   <component name="WindowStateProjectService">
     <state x="734" y="355" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1595944202982">
@@ -132,29 +141,29 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="1082" y="529" key="ExperimentsDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958409214" />
-    <state width="2517" height="402" key="GridCell.Tab.0.bottom" timestamp="1597240901057">
-      <screen x="0" y="0" width="2560" height="1400" />
+    <state width="2105" height="174" key="GridCell.Tab.0.bottom" timestamp="1597410504224">
+      <screen x="1440" y="-292" width="2560" height="1417" />
     </state>
-    <state width="1968" height="314" key="GridCell.Tab.0.bottom/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596570507978" />
-    <state width="1398" height="272" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1596054521738" />
+    <state width="2105" height="174" key="GridCell.Tab.0.bottom/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1597410504224" />
+    <state width="1398" height="174" key="GridCell.Tab.0.bottom/0.23.1440.877@0.23.1440.877" timestamp="1597346184984" />
     <state width="2517" height="402" key="GridCell.Tab.0.bottom/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1597240901057" />
-    <state width="2517" height="402" key="GridCell.Tab.0.center" timestamp="1597240901057">
-      <screen x="0" y="0" width="2560" height="1400" />
+    <state width="2105" height="174" key="GridCell.Tab.0.center" timestamp="1597410504222">
+      <screen x="1440" y="-292" width="2560" height="1417" />
     </state>
-    <state width="1968" height="314" key="GridCell.Tab.0.center/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596570507977" />
-    <state width="1398" height="272" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
+    <state width="2105" height="174" key="GridCell.Tab.0.center/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1597410504222" />
+    <state width="1398" height="174" key="GridCell.Tab.0.center/0.23.1440.877@0.23.1440.877" timestamp="1597346184983" />
     <state width="2517" height="402" key="GridCell.Tab.0.center/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1597240901057" />
-    <state width="2517" height="402" key="GridCell.Tab.0.left" timestamp="1597240901056">
-      <screen x="0" y="0" width="2560" height="1400" />
+    <state width="2105" height="174" key="GridCell.Tab.0.left" timestamp="1597410504222">
+      <screen x="1440" y="-292" width="2560" height="1417" />
     </state>
-    <state width="1968" height="314" key="GridCell.Tab.0.left/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596570507977" />
-    <state width="1398" height="272" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
+    <state width="2105" height="174" key="GridCell.Tab.0.left/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1597410504222" />
+    <state width="1398" height="174" key="GridCell.Tab.0.left/0.23.1440.877@0.23.1440.877" timestamp="1597346184983" />
     <state width="2517" height="402" key="GridCell.Tab.0.left/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1597240901056" />
-    <state width="2517" height="402" key="GridCell.Tab.0.right" timestamp="1597240901057">
-      <screen x="0" y="0" width="2560" height="1400" />
+    <state width="2105" height="174" key="GridCell.Tab.0.right" timestamp="1597410504223">
+      <screen x="1440" y="-292" width="2560" height="1417" />
     </state>
-    <state width="1968" height="314" key="GridCell.Tab.0.right/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596570507977" />
-    <state width="1398" height="272" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1596054521737" />
+    <state width="2105" height="174" key="GridCell.Tab.0.right/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1597410504223" />
+    <state width="1398" height="174" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1597346184984" />
     <state width="2517" height="402" key="GridCell.Tab.0.right/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1597240901057" />
     <state x="2220" y="-42" key="SettingsEditor" timestamp="1596136907013">
       <screen x="1440" y="-292" width="2560" height="1417" />
@@ -162,6 +171,10 @@
     <state x="2220" y="-42" key="SettingsEditor/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596136907013" />
     <state x="439" y="178" key="SettingsEditor/0.23.1440.877@0.23.1440.877" timestamp="1595970002424" />
     <state x="781" y="345" key="SettingsEditor/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958351777" />
+    <state x="2114" y="156" key="Vcs.Push.Dialog.v2" timestamp="1597266221285">
+      <screen x="1440" y="-292" width="2560" height="1417" />
+    </state>
+    <state x="2114" y="156" key="Vcs.Push.Dialog.v2/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1597266221285" />
     <state x="2529" y="329" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1596570477431">
       <screen x="1440" y="-292" width="2560" height="1417" />
     </state>

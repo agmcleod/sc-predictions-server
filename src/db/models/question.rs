@@ -12,6 +12,12 @@ pub struct Question {
     pub updated_at: DateTime<Utc>,
 }
 
+#[derive(Debug, Deserialize, Queryable, Serialize, PartialEq)]
+pub struct QuestionDetails {
+    pub id: i32,
+    pub body: String,
+}
+
 impl Question {
     pub fn get_all(conn: &PgConnection) -> Result<Vec<Question>, Error> {
         use crate::schema::questions::dsl::{body, questions};

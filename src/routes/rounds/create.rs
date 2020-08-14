@@ -81,7 +81,7 @@ mod tests {
     struct NewGame {
         slug: Option<String>,
     }
-
+    
     #[actix_rt::test]
     async fn test_create_round_as_owner() {
         let pool = new_pool();

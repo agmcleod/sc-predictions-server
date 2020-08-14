@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use diesel::{self, PgConnection, RunQueryDsl};
+use diesel::{self, PgConnection, QueryDsl, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
 use crate::db::models::Game;
@@ -40,6 +40,18 @@ impl Round {
                 game_id,
             })
             .get_result(conn)?;
+
+        Ok(round)
+    }
+
+    pub fn get_active_round_by_game_id(conn: &PgConnection, game_id: i32) -> Result<Round, Error> {
+        use diesel::ExpressionMethods;
+        use rounds::dsl::{game_id as game_id_field, locked, rounds as rounds_table};
+
+        let round = rounds_table
+            .filter(game_id_field.eq(game_id))
+            .filter(locked.eq(false))
+            .first(conn)?;
 
         Ok(round)
     }

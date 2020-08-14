@@ -26,6 +26,11 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                     web::scope("/rounds")
                         .wrap(Auth)
                         .route("", web::post().to(rounds::create)),
+                )
+                .service(
+                    web::scope("/current-round")
+                        .wrap(Auth)
+                        .route("", web::get().to(rounds::status)),
                 ),
         ),
     );
