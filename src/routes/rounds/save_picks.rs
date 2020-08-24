@@ -33,7 +33,7 @@ fn validate_user_has_not_picked(
     round_id: i32,
 ) -> Result<(), Error> {
     let results = UserQuestion::find_by_round_and_user(conn, round_id, claim.id)?;
-    if (results.len() > 0) {
+    if results.len() > 0 {
         return Err(Error::BadRequest(
             "User has already chosen picks for this round".to_string(),
         ));
@@ -95,15 +95,16 @@ pub async fn save_picks(
 
 #[cfg(test)]
 mod tests {
-    use diesel::{self, ExpressionMethods, QueryDsl, RunQueryDsl};
+    use diesel::{self, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
     use serde::Serialize;
 
     use crate::auth::{create_jwt, PrivateClaim, Role};
     use crate::db::{
         get_conn,
-        models::{Game, NewGameQuestion, NewRound, NewUser, Question, User, UserQuestion},
+        models::{Game, NewGameQuestion, NewRound, NewUser, Question, Round, User, UserQuestion},
         new_pool,
     };
+    use crate::errors::ErrorResponse;
     use crate::schema::{
         game_questions, games, questions as questions_dsl, rounds, user_questions, users,
     };
@@ -118,17 +119,13 @@ mod tests {
         pub slug: Option<String>,
     }
 
-    #[actix_rt::test]
-    async fn test_can_save_picks() {
-        let pool = new_pool();
-        let conn = get_conn(&pool).unwrap();
-
+    fn create_game_data(conn: &PgConnection) -> (Vec<Question>, Game, User, Round) {
         let questions: Vec<Question> = diesel::insert_into(questions_dsl::table)
             .values(&vec![
                 questions_dsl::body.eq("One question".to_string()),
                 questions_dsl::body.eq("Second question".to_string()),
             ])
-            .get_results(&conn)
+            .get_results(conn)
             .unwrap();
 
         let game: Game = diesel::insert_into(games::table)
@@ -136,7 +133,7 @@ mod tests {
                 locked: false,
                 slug: None,
             })
-            .get_result(&conn)
+            .get_result(conn)
             .unwrap();
 
         diesel::insert_into(game_questions::table)
@@ -149,7 +146,7 @@ mod tests {
                     })
                     .collect::<Vec<NewGameQuestion>>(),
             )
-            .execute(&conn)
+            .execute(conn)
             .unwrap();
 
         let user: User = diesel::insert_into(users::table)
@@ -157,17 +154,36 @@ mod tests {
                 user_name: "agmcleod".to_string(),
                 game_id: game.id,
             })
-            .get_result(&conn)
+            .get_result(conn)
             .unwrap();
 
-        diesel::insert_into(rounds::table)
+        let round: Round = diesel::insert_into(rounds::table)
             .values(NewRound {
                 player_one: "one".to_string(),
                 player_two: "two".to_string(),
                 game_id: game.id,
             })
-            .execute(&conn)
+            .get_result(conn)
             .unwrap();
+
+        (questions, game, user, round)
+    }
+
+    fn clear_game_data(conn: &PgConnection) {
+        diesel::delete(user_questions::table).execute(conn).unwrap();
+        diesel::delete(rounds::table).execute(conn).unwrap();
+        diesel::delete(users::table).execute(conn).unwrap();
+        diesel::delete(game_questions::table).execute(conn).unwrap();
+        diesel::delete(games::table).execute(conn).unwrap();
+        diesel::delete(questions_dsl::table).execute(conn).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_can_save_picks() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let (questions, game, user, _) = create_game_data(&conn);
 
         let claim = PrivateClaim::new(user.id, user.user_name.clone(), game.id, Role::Player);
         let token = create_jwt(claim).unwrap();
@@ -199,15 +215,39 @@ mod tests {
 
         assert_eq!(answers.len(), 2);
 
-        diesel::delete(user_questions::table)
-            .execute(&conn)
-            .unwrap();
-        diesel::delete(rounds::table).execute(&conn).unwrap();
-        diesel::delete(users::table).execute(&conn).unwrap();
-        diesel::delete(game_questions::table)
-            .execute(&conn)
-            .unwrap();
-        diesel::delete(games::table).execute(&conn).unwrap();
-        diesel::delete(questions_dsl::table).execute(&conn).unwrap();
+        clear_game_data(&conn);
+    }
+
+    #[actix_rt::test]
+    async fn test_owner_cannot_select() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let (questions, game, user, _) = create_game_data(&conn);
+
+        let claim = PrivateClaim::new(user.id, user.user_name.clone(), game.id, Role::Owner);
+        let token = create_jwt(claim).unwrap();
+
+        let (status, _): (u16, ErrorResponse) = test_post(
+            "/api/rounds/set-picks",
+            SavePicksParams {
+                answers: vec![
+                    Answer {
+                        id: questions[0].id,
+                        value: "one".to_string(),
+                    },
+                    Answer {
+                        id: questions[1].id,
+                        value: "two".to_string(),
+                    },
+                ],
+            },
+            Some(token),
+        )
+        .await;
+
+        assert_eq!(status, 403);
+
+        clear_game_data(&conn);
     }
 }
