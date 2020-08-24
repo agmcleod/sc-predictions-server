@@ -41,6 +41,18 @@ table! {
 }
 
 table! {
+    user_questions (id) {
+        id -> Int4,
+        user_id -> Int4,
+        question_id -> Int4,
+        round_id -> Int4,
+        answer -> Varchar,
+        created_at -> Timestamptz,
+        updated_at -> Timestamptz,
+    }
+}
+
+table! {
     users (id) {
         id -> Int4,
         user_name -> Varchar,
@@ -55,6 +67,9 @@ table! {
 joinable!(game_questions -> games (game_id));
 joinable!(game_questions -> questions (question_id));
 joinable!(rounds -> games (game_id));
+joinable!(user_questions -> questions (question_id));
+joinable!(user_questions -> rounds (round_id));
+joinable!(user_questions -> users (user_id));
 joinable!(users -> games (game_id));
 
 allow_tables_to_appear_in_same_query!(
@@ -62,5 +77,6 @@ allow_tables_to_appear_in_same_query!(
     games,
     questions,
     rounds,
+    user_questions,
     users,
 );

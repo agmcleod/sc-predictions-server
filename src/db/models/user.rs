@@ -6,7 +6,7 @@ use crate::auth::{create_jwt, PrivateClaim, Role};
 use crate::errors::Error;
 use crate::schema::users;
 
-#[derive(Debug, Queryable, Serialize, Deserialize)]
+#[derive(Debug, Queryable, Identifiable, Serialize, Deserialize)]
 pub struct User {
     pub id: i32,
     pub user_name: String,
@@ -19,9 +19,9 @@ pub struct User {
 
 #[derive(Insertable)]
 #[table_name = "users"]
-struct NewUser {
-    user_name: String,
-    game_id: i32,
+pub struct NewUser {
+    pub user_name: String,
+    pub game_id: i32,
 }
 
 impl User {

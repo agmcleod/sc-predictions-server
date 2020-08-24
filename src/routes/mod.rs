@@ -25,7 +25,8 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
                 .service(
                     web::scope("/rounds")
                         .wrap(Auth)
-                        .route("", web::post().to(rounds::create)),
+                        .route("", web::post().to(rounds::create))
+                        .route("/set-picks", web::post().to(rounds::save_picks)),
                 )
                 .service(
                     web::scope("/current-round")

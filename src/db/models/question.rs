@@ -3,8 +3,9 @@ use diesel::{PgConnection, QueryDsl, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
 use crate::errors::Error;
+use crate::schema::questions;
 
-#[derive(Debug, Serialize, Deserialize, Queryable)]
+#[derive(Debug, Identifiable, Serialize, Deserialize, Queryable)]
 pub struct Question {
     pub id: i32,
     pub body: String,
