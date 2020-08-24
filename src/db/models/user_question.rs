@@ -23,7 +23,7 @@ pub struct UserQuestion {
 
 #[derive(Insertable, Serialize)]
 #[table_name = "user_questions"]
-struct NewUserQuestion {
+pub struct NewUserQuestion {
     pub user_id: i32,
     pub question_id: i32,
     pub round_id: i32,

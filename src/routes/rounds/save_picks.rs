@@ -101,7 +101,10 @@ mod tests {
     use crate::auth::{create_jwt, PrivateClaim, Role};
     use crate::db::{
         get_conn,
-        models::{Game, NewGameQuestion, NewRound, NewUser, Question, Round, User, UserQuestion},
+        models::{
+            Game, NewGameQuestion, NewRound, NewUser, NewUserQuestion, Question, Round, User,
+            UserQuestion,
+        },
         new_pool,
     };
     use crate::errors::ErrorResponse;
@@ -247,6 +250,127 @@ mod tests {
         .await;
 
         assert_eq!(status, 403);
+
+        clear_game_data(&conn);
+    }
+
+    #[actix_rt::test]
+    async fn test_no_active_round() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let (questions, game, user, round) = create_game_data(&conn);
+
+        diesel::update(rounds::table)
+            .set(rounds::dsl::locked.eq(true))
+            .filter(rounds::dsl::id.eq(round.id))
+            .execute(&conn)
+            .unwrap();
+
+        let claim = PrivateClaim::new(user.id, user.user_name.clone(), game.id, Role::Player);
+        let token = create_jwt(claim).unwrap();
+
+        let (status, _): (u16, ErrorResponse) = test_post(
+            "/api/rounds/set-picks",
+            SavePicksParams {
+                answers: vec![
+                    Answer {
+                        id: questions[0].id,
+                        value: "one".to_string(),
+                    },
+                    Answer {
+                        id: questions[1].id,
+                        value: "two".to_string(),
+                    },
+                ],
+            },
+            Some(token),
+        )
+        .await;
+
+        assert_eq!(status, 404);
+
+        clear_game_data(&conn);
+    }
+
+    #[actix_rt::test]
+    async fn test_player_has_already_picked() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let (questions, game, user, round) = create_game_data(&conn);
+
+        diesel::insert_into(user_questions::table)
+            .values(NewUserQuestion {
+                user_id: user.id,
+                question_id: questions[0].id,
+                round_id: round.id,
+                answer: round.player_one.clone(),
+            })
+            .execute(&conn)
+            .unwrap();
+
+        let claim = PrivateClaim::new(user.id, user.user_name.clone(), game.id, Role::Player);
+        let token = create_jwt(claim).unwrap();
+
+        let (status, err): (u16, ErrorResponse) = test_post(
+            "/api/rounds/set-picks",
+            SavePicksParams {
+                answers: vec![
+                    Answer {
+                        id: questions[0].id,
+                        value: "one".to_string(),
+                    },
+                    Answer {
+                        id: questions[1].id,
+                        value: "two".to_string(),
+                    },
+                ],
+            },
+            Some(token),
+        )
+        .await;
+
+        assert_eq!(status, 400);
+        assert_eq!(
+            err.errors[0],
+            "User has already chosen picks for this round"
+        );
+
+        clear_game_data(&conn);
+    }
+
+    #[actix_rt::test]
+    async fn test_player_has_answered_valid_questions() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let (questions, game, user, _) = create_game_data(&conn);
+
+        let claim = PrivateClaim::new(user.id, user.user_name.clone(), game.id, Role::Player);
+        let token = create_jwt(claim).unwrap();
+
+        let answer_id = questions[0].id + 10;
+        let (status, err): (u16, ErrorResponse) = test_post(
+            "/api/rounds/set-picks",
+            SavePicksParams {
+                answers: vec![
+                    Answer {
+                        id: answer_id,
+                        value: "one".to_string(),
+                    },
+                    Answer {
+                        id: questions[1].id + 15,
+                        value: "two".to_string(),
+                    },
+                ],
+            },
+            Some(token),
+        )
+        .await;
+
+        assert_eq!(status, 400);
+        assert_eq!(err.errors[0], format!("Invalid question id: {}", answer_id));
 
         clear_game_data(&conn);
     }
