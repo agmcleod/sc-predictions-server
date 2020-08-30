@@ -48,11 +48,17 @@ Can then use it locally, or run the cli via docker:
 
 ```
 # create a migration file
-dockr exec server diesel migration generate create_posts
+dockr exec server diesel migration generate create_posts --migration-dir=db/migrations
 # apply all non applied migrations
-dockr exec server diesel migration run
+dockr exec server diesel migration run --migration-dir=db/migrations
 # redo the last migration
-dockr exec server diesel migration redo
+dockr exec server diesel migration redo --migration-dir=db/migrations
+```
+
+## Seeds
+
+```
+dockr exec server cargo run --bin seeds
 ```
 
 ## Running tests

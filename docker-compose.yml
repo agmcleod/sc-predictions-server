@@ -3,7 +3,7 @@ version: '3'
 services:
   server:
     build: .
-    command: cargo run
+    command: cargo run --bin sc-predictions-server
     volumes:
       - .:/app
     ports:
@@ -14,7 +14,6 @@ services:
       RUST_BACKTRACE: full
       RUST_LOG: actix_web=debug
       JWT_KEY: 77397A244326452948404D635166546A576E5A7234753778214125442A472D4A
-      SESSION_KEY: 4C4382C60D619D6E43AB18F4428467BAAB13FC222222F14D9F7521876282E77B
     links:
       - database
   database:
