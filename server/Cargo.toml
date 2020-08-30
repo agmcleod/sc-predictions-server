@@ -1,0 +1,33 @@
+[package]
+name = "sc-predictions-server"
+version = "0.1.0"
+authors = ["Aaron McLeod <aaron.g.mcleod@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+actix-cors = "0.2"
+actix-http = "1.0.1"
+actix-identity = "0.2"
+actix-service = "1.0.5"
+actix-web = "2.0"
+actix-rt = "1.0"
+auth = { path = "../auth" }
+chrono = { version = "0.4.6", features = ["serde"] }
+derive_more = "0.99.9"
+db = { path = "../db" }
+diesel = { version = "1.4.4", features = ["postgres", "r2d2", "uuid", "chrono"] }
+dotenv = "0.9.0"
+env_logger = "0.5.13"
+errors = { path = "../errors" }
+futures = "0.3.5"
+jsonwebtoken = "7.2.0"
+log = "0.4.0"
+serde = "1.0.80"
+serde_json = "1.0.13"
+serde_derive = "1.0.80"
+uuid = { version = "0.5", features = ["serde"] }
+validator = "0.8.0"
+validator_derive = "0.8.0"
+futures-util = "0.3.5"
+
+

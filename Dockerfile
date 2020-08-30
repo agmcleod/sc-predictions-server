@@ -5,7 +5,7 @@ COPY Cargo.lock .
 RUN mkdir -p src
 RUN echo 'fn main() {}' > src/main.rs
 
-RUN cargo build
+RUN cargo build --bin server
 
 RUN cargo install diesel_cli --no-default-features --features postgres
 
@@ -14,4 +14,4 @@ RUN cargo install diesel_cli --no-default-features --features postgres
 COPY . .
 RUN touch src/main.rs
 
-RUN cargo build
+RUN cargo build --bin server
