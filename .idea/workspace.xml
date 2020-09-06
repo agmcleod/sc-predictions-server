@@ -29,73 +29,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players">
-      <change afterPath="$PROJECT_DIR$/db/src/utils/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.dockerignore" beforeDir="false" afterPath="$PROJECT_DIR$/.dockerignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/sc-predictions-server.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/sc-predictions-server.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/server/src/routes/rounds/lock_round.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.lock" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.lock" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Cargo.toml" beforeDir="false" afterPath="$PROJECT_DIR$/Cargo.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/Dockerfile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/diesel.toml" beforeDir="false" afterPath="$PROJECT_DIR$/diesel.toml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.test.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.test.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docker-compose.yml" beforeDir="false" afterPath="$PROJECT_DIR$/docker-compose.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/.gitkeep" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/00000000000000_diesel_initial_setup/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/00000000000000_diesel_initial_setup/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204547_create_questions/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204547_create_questions/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204555_create_games/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204555_create_games/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204601_create_game_questions/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204601_create_game_questions/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204604_create_users/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-21-204604_create_users/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-24-155825_game_questions_fk_not_null/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-24-155825_game_questions_fk_not_null/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-29-201556_change_session_id_to_text/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-29-201556_change_session_id_to_text/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-30-140508_change_game_creator_to_text/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-07-30-140508_change_game_creator_to_text/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-08-12-005746_create_rounds/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-08-12-005746_create_rounds/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-08-12-202553_add_locked_to_rounds/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-08-12-202553_add_locked_to_rounds/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-08-23-181426_create_user_questions/down.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/migrations/2020-08-23-181426_create_user_questions/up.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/seeds/0001.questions.sql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/auth.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/game.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/game_question.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/question.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/round.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/user.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/db/models/user_question.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/errors.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/middleware/auth.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/middleware/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/create.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/get_players.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/join.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/games/status.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/questions/get_all.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/questions/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/rounds/create.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/rounds/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/rounds/save_picks.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/routes/rounds/status.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/schema.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/tests/helpers.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/tests/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/utils/mod.rs" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/validate.rs" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/db/src/models/round.rs" beforeDir="false" afterPath="$PROJECT_DIR$/db/src/models/round.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/db/src/schema.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/routes/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/mod.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/routes/rounds/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/rounds/mod.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -208,10 +147,10 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="734" y="355" width="1092" height="714" key="#com.intellij.execution.impl.EditConfigurationsDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598748796939" />
-    <state x="960" y="436" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1597193541090">
+    <state x="960" y="436" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1599411035370">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="960" y="436" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1597193541090" />
+    <state x="960" y="436" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1599411035370" />
     <state x="1082" y="529" key="ExperimentsDialog" timestamp="1595958409214">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -259,11 +198,11 @@
     </state>
     <state x="2529" y="329" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596570477431" />
     <state x="1089" y="614" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598753485434" />
-    <state x="987" y="299" width="650" height="801" key="find.popup" timestamp="1598810627535">
+    <state x="987" y="299" width="650" height="801" key="find.popup" timestamp="1599412642475">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="555" y="210" width="568" height="502" key="find.popup/0.23.1440.877@0.23.1440.877" timestamp="1597259489101" />
-    <state x="987" y="299" width="650" height="801" key="find.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598810627535" />
+    <state x="987" y="299" width="650" height="801" key="find.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1599412642475" />
     <state x="595" y="426" key="new project wizard" timestamp="1598741258192">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>

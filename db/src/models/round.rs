@@ -56,4 +56,15 @@ impl Round {
 
         Ok(round)
     }
+
+    pub fn lock(conn: &PgConnection, round_id: i32) -> Result<(), Error> {
+        use diesel::ExpressionMethods;
+        use rounds::dsl::{locked, rounds as rounds_q};
+
+        diesel::update(rounds_q.find(round_id))
+            .set(locked.eq(true))
+            .execute(conn)?;
+
+        Ok(())
+    }
 }
