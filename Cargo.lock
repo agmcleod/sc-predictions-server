@@ -1846,36 +1846,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e27a8b19b835f7aea908818e871f5cc3a5a186550c30773be987e155e8163d8f"
 
 [[package]]
-name = "sc-predictions-server"
-version = "0.1.0"
-dependencies = [
- "actix-cors",
- "actix-http",
- "actix-identity",
- "actix-rt",
- "actix-service",
- "actix-web",
- "auth",
- "chrono",
- "db",
- "derive_more",
- "diesel",
- "dotenv",
- "env_logger",
- "errors",
- "futures",
- "futures-util",
- "jsonwebtoken",
- "log",
- "serde",
- "serde_derive",
- "serde_json",
- "uuid 0.5.1",
- "validator",
- "validator_derive",
-]
-
-[[package]]
 name = "scheduled-thread-pool"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1940,6 +1910,36 @@ dependencies = [
  "itoa",
  "serde",
  "url 2.1.1",
+]
+
+[[package]]
+name = "server"
+version = "0.1.0"
+dependencies = [
+ "actix-cors",
+ "actix-http",
+ "actix-identity",
+ "actix-rt",
+ "actix-service",
+ "actix-web",
+ "auth",
+ "chrono",
+ "db",
+ "derive_more",
+ "diesel",
+ "dotenv",
+ "env_logger",
+ "errors",
+ "futures",
+ "futures-util",
+ "jsonwebtoken",
+ "log",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "uuid 0.5.1",
+ "validator",
+ "validator_derive",
 ]
 
 [[package]]

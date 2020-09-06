@@ -36,6 +36,7 @@ mod tests {
         new_pool,
         schema::{games, rounds},
     };
+    use errors::ErrorResponse;
 
     use crate::tests::helpers::tests::test_post;
 
@@ -99,5 +100,92 @@ mod tests {
         assert_eq!(results.len(), 2);
         assert_eq!(results[0].locked, true);
         assert_eq!(results[1].locked, true);
+
+        diesel::delete(rounds::table).execute(&conn).unwrap();
+        diesel::delete(games::table).execute(&conn).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_lock_current_round_forbidden_for_player() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let game: Game = diesel::insert_into(games::table)
+            .values(NewGame {
+                locked: true,
+                slug: Some("abc123".to_string()),
+            })
+            .get_result(&conn)
+            .unwrap();
+
+        diesel::insert_into(rounds::table)
+            .values(vec![
+                NewRound {
+                    player_one: "maru".to_string(),
+                    player_two: "zest".to_string(),
+                    game_id: game.id,
+                    locked: false,
+                },
+                NewRound {
+                    player_one: "serral".to_string(),
+                    player_two: "ty".to_string(),
+                    game_id: game.id,
+                    locked: true,
+                },
+            ])
+            .execute(&conn)
+            .unwrap();
+
+        let claim = PrivateClaim::new(game.id, game.slug.unwrap(), game.id, Role::Player);
+        let token = create_jwt(claim).unwrap();
+
+        let res: (u16, ErrorResponse) = test_post("/api/rounds/lock", (), Some(token)).await;
+
+        assert_eq!(res.0, 403);
+
+        diesel::delete(rounds::table).execute(&conn).unwrap();
+        diesel::delete(games::table).execute(&conn).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_lock_current_round_no_active_round() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let game: Game = diesel::insert_into(games::table)
+            .values(NewGame {
+                locked: true,
+                slug: Some("abc123".to_string()),
+            })
+            .get_result(&conn)
+            .unwrap();
+
+        diesel::insert_into(rounds::table)
+            .values(vec![
+                NewRound {
+                    player_one: "maru".to_string(),
+                    player_two: "zest".to_string(),
+                    game_id: game.id,
+                    locked: true,
+                },
+                NewRound {
+                    player_one: "serral".to_string(),
+                    player_two: "ty".to_string(),
+                    game_id: game.id,
+                    locked: true,
+                },
+            ])
+            .execute(&conn)
+            .unwrap();
+
+        let claim = PrivateClaim::new(game.id, game.slug.unwrap(), game.id, Role::Owner);
+        let token = create_jwt(claim).unwrap();
+
+        let res: (u16, ErrorResponse) = test_post("/api/rounds/lock", (), Some(token)).await;
+
+        assert_eq!(res.0, 404);
+
+        diesel::delete(rounds::table).execute(&conn).unwrap();
+        diesel::delete(games::table).execute(&conn).unwrap();
     }
 }
