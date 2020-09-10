@@ -48,6 +48,15 @@ fn validate_selected_questions(
     params: &Json<SavePicksParams>,
 ) -> Result<(), Error> {
     let questions = GameQuestion::get_questions_by_game_id(&conn, claim.game_id)?;
+
+    if questions.len() != params.answers.len() {
+        return Err(Error::BadRequest(format!(
+            "Received {} answers, expected {}",
+            params.answers.len(),
+            questions.len()
+        )));
+    }
+
     let mut question_ids = HashSet::<i32>::new();
     for question in &questions {
         question_ids.insert(question.id);
@@ -371,6 +380,34 @@ mod tests {
 
         assert_eq!(status, 400);
         assert_eq!(err.errors[0], format!("Invalid question id: {}", answer_id));
+
+        clear_game_data(&conn);
+    }
+
+    #[actix_rt::test]
+    async fn test_player_missed_a_question() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let (questions, game, user, _) = create_game_data(&conn);
+
+        let claim = PrivateClaim::new(user.id, user.user_name.clone(), game.id, Role::Player);
+        let token = create_jwt(claim).unwrap();
+
+        let (status, err): (u16, ErrorResponse) = test_post(
+            "/api/rounds/set-picks",
+            SavePicksParams {
+                answers: vec![Answer {
+                    id: questions[0].id,
+                    value: "one".to_string(),
+                }],
+            },
+            Some(token),
+        )
+        .await;
+
+        assert_eq!(status, 400);
+        assert_eq!(err.errors[0], "Received 1 answers, expected 2".to_string());
 
         clear_game_data(&conn);
     }
