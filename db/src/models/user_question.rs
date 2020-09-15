@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use errors::Error;
 
 use crate::models::{Question, Round, User};
-use crate::schema::user_questions;
+use crate::schema::{user_questions, users};
 
 #[derive(Associations, Deserialize, Queryable, Identifiable, Serialize)]
 #[table_name = "user_questions"]
@@ -31,6 +31,16 @@ pub struct NewUserQuestion {
     pub answer: String,
 }
 
+#[derive(Deserialize, Identifiable, PartialEq, Queryable, Serialize)]
+#[table_name = "user_questions"]
+pub struct UserAnswer {
+    pub id: i32,
+    pub question_id: i32,
+    pub user_id: i32,
+    pub answer: String,
+    pub user_name: String,
+}
+
 impl UserQuestion {
     pub fn create(
         conn: &PgConnection,
@@ -49,6 +59,21 @@ impl UserQuestion {
             .get_result(conn)?;
 
         Ok(user_question)
+    }
+
+    pub fn find_by_round(conn: &PgConnection, round_id: i32) -> Result<Vec<UserAnswer>, Error> {
+        use user_questions::dsl::{
+            answer, id, question_id, round_id as round_id_dsl, user_id,
+            user_questions as user_questions_table,
+        };
+
+        let results: Vec<UserAnswer> = user_questions_table
+            .inner_join(users::table)
+            .select((id, question_id, user_id, answer, users::user_name))
+            .filter(round_id_dsl.eq(round_id))
+            .get_results(conn)?;
+
+        Ok(results)
     }
 
     pub fn find_by_round_and_user(
