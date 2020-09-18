@@ -67,13 +67,13 @@ impl UserQuestion {
             user_questions as user_questions_table,
         };
 
-        let results: Vec<UserAnswer> = user_questions_table
+        let user_answers = user_questions_table
             .inner_join(users::table)
             .select((id, question_id, user_id, answer, users::user_name))
             .filter(round_id_dsl.eq(round_id))
-            .get_results(conn)?;
+            .get_results::<UserAnswer>(conn)?;
 
-        Ok(results)
+        Ok(user_answers)
     }
 
     pub fn find_by_round_and_user(
