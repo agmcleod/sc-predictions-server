@@ -3,7 +3,7 @@ version: '3'
 services:
   server:
     build: .
-    command: cargo run --bin sc-predictions-server
+    command: cargo run --bin server
     volumes:
       - .:/app
     ports:
