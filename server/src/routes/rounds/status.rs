@@ -19,13 +19,14 @@ pub struct StatusResponse {
     questions: Vec<QuestionDetails>,
     round_id: i32,
     locked: bool,
+    finished: bool,
 }
 
 pub async fn status(id: Identity, pool: Data<PgPool>) -> Result<Json<StatusResponse>, Error> {
     let (claim, _) = get_claim_from_identity(id)?;
     let (round, questions) = block(move || {
         let conn = get_conn(&pool)?;
-        let round = Round::get_active_round_by_game_id(&conn, claim.game_id)?;
+        let round = Round::get_latest_round_by_game_id(&conn, claim.game_id)?;
         let questions = GameQuestion::get_questions_by_game_id(&conn, claim.game_id)?;
 
         Ok((round, questions))
@@ -37,6 +38,7 @@ pub async fn status(id: Identity, pool: Data<PgPool>) -> Result<Json<StatusRespo
         questions,
         round_id: round.id,
         locked: round.locked,
+        finished: round.finished,
     }))
 }
 
@@ -147,6 +149,7 @@ mod tests {
         );
         assert_eq!(res.1.round_id, round.id);
         assert_eq!(res.1.locked, false);
+        assert_eq!(res.1.finished, false);
 
         diesel::delete(game_questions::table)
             .execute(&conn)
@@ -190,9 +193,12 @@ mod tests {
 
         let claim = PrivateClaim::new(game.id, game.slug.unwrap().clone(), game.id, Role::Owner);
         let token = create_jwt(claim).unwrap();
-        let res: (u16, ErrorResponse) = test_get("/api/current-round", Some(token)).await;
+        let res: (u16, StatusResponse) = test_get("/api/current-round", Some(token)).await;
 
-        assert_eq!(res.0, 404);
+        assert_eq!(res.0, 200);
+
+        assert_eq!(res.1.locked, true);
+        assert_eq!(res.1.player_names, vec!["mvp", "mc"]);
 
         diesel::delete(rounds::table).execute(&conn).unwrap();
         diesel::delete(games::table).execute(&conn).unwrap();

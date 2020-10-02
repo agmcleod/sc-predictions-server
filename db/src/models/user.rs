@@ -75,4 +75,19 @@ impl User {
 
         Ok(user)
     }
+
+    pub fn add_score(connection: &PgConnection, user_id: i32, amount: i32) -> Result<User, Error> {
+        use crate::schema::users::dsl::{id, score as score_field, users as users_table};
+
+        let score = users_table
+            .select(score_field)
+            .filter(id.eq(user_id))
+            .get_result::<i32>(connection)?;
+
+        let user = diesel::update(users_table.filter(id.eq(user_id)))
+            .set(score_field.eq(score + amount))
+            .get_result(connection)?;
+
+        Ok(user)
+    }
 }

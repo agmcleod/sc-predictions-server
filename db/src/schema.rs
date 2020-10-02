@@ -37,6 +37,7 @@ table! {
         created_at -> Timestamptz,
         updated_at -> Timestamptz,
         locked -> Bool,
+        finished -> Bool,
     }
 }
 

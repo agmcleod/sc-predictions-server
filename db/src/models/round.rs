@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use diesel::{self, PgConnection, QueryDsl, RunQueryDsl};
+use diesel::{self, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
 use errors::Error;
@@ -17,6 +17,7 @@ pub struct Round {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub locked: bool,
+    pub finished: bool,
 }
 
 #[derive(Insertable)]
@@ -46,7 +47,6 @@ impl Round {
     }
 
     pub fn get_active_round_by_game_id(conn: &PgConnection, game_id: i32) -> Result<Round, Error> {
-        use diesel::ExpressionMethods;
         use rounds::dsl::{game_id as game_id_field, locked, rounds as rounds_table};
 
         let round = rounds_table
@@ -57,12 +57,49 @@ impl Round {
         Ok(round)
     }
 
-    pub fn lock(conn: &PgConnection, round_id: i32) -> Result<(), Error> {
-        use diesel::ExpressionMethods;
-        use rounds::dsl::{locked, rounds as rounds_q};
+    pub fn get_latest_round_by_game_id(conn: &PgConnection, game_id: i32) -> Result<Round, Error> {
+        use rounds::dsl::{created_at, game_id as game_id_field, rounds as rounds_table};
 
-        diesel::update(rounds_q.find(round_id))
+        let round = rounds_table
+            .filter(game_id_field.eq(game_id))
+            .order(created_at.desc())
+            .get_result::<Round>(conn)?;
+
+        Ok(round)
+    }
+
+    pub fn get_unfinished_round_by_game_id(
+        conn: &PgConnection,
+        game_id: i32,
+    ) -> Result<Round, Error> {
+        use rounds::dsl::{
+            created_at, finished, game_id as game_id_field, locked, rounds as rounds_table,
+        };
+
+        let round = rounds_table
+            .filter(game_id_field.eq(game_id))
+            .filter(locked.eq(true))
+            .filter(finished.eq(false))
+            .first(conn)?;
+
+        Ok(round)
+    }
+
+    pub fn lock(conn: &PgConnection, round_id: i32) -> Result<(), Error> {
+        use rounds::dsl::{locked, rounds as rounds_table};
+
+        diesel::update(rounds_table.find(round_id))
             .set(locked.eq(true))
+            .execute(conn)?;
+
+        Ok(())
+    }
+
+    pub fn finish(conn: &PgConnection, round_id: i32) -> Result<(), Error> {
+        use rounds::dsl::{finished, rounds as rounds_table};
+
+        diesel::update(rounds_table.find(round_id))
+            .set(finished.eq(true))
             .execute(conn)?;
 
         Ok(())

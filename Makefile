@@ -1,11 +1,10 @@
 SHELL := /bin/bash
 
 test_prepare:
-	docker-compose -f docker-compose.test.yml exec database_test dropdb sc_predictions_test
-	docker-compose -f docker-compose.test.yml exec database_test createdb sc_predictions_test
 	docker-compose -f docker-compose.test.yml exec server_test diesel migration run --migration-dir=db/migrations
 
 test:
+	docker-compose -f docker-compose.test.yml exec database_test psql -d sc_predictions_test --c="TRUNCATE game_questions, user_questions, users, rounds, games, questions"
 	docker-compose -f docker-compose.test.yml exec server_test cargo test $(T) -- --nocapture --test-threads=1
 
 
