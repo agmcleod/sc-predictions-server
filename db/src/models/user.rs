@@ -25,6 +25,15 @@ pub struct NewUser {
     pub game_id: i32,
 }
 
+#[derive(Deserialize, Identifiable, Queryable, Serialize)]
+#[table_name = "users"]
+pub struct UserDetails {
+    pub id: i32,
+    pub user_name: String,
+    pub game_id: i32,
+    pub score: i32,
+}
+
 impl User {
     pub fn create(
         connection: &PgConnection,
@@ -53,10 +62,13 @@ impl User {
     pub fn find_all_by_game_id(
         connection: &PgConnection,
         game_id: i32,
-    ) -> Result<Vec<User>, Error> {
-        use crate::schema::users::dsl::{game_id as gi, users};
+    ) -> Result<Vec<UserDetails>, Error> {
+        use crate::schema::users::dsl::{game_id as game_id_field, id, score, user_name, users};
 
-        let results = users.filter(gi.eq(game_id)).load::<User>(connection)?;
+        let results = users
+            .select((id, user_name, game_id_field, score))
+            .filter(game_id_field.eq(game_id))
+            .get_results::<UserDetails>(connection)?;
 
         Ok(results)
     }

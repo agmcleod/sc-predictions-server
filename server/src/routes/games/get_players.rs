@@ -2,14 +2,18 @@ use actix_identity::Identity;
 use actix_web::web::{block, Data, Json, Path};
 
 use auth::identity_matches_game_id;
-use db::{get_conn, models::User, PgPool};
+use db::{
+    get_conn,
+    models::{User, UserDetails},
+    PgPool,
+};
 use errors;
 
 pub async fn get_players(
     id: Identity,
     game_id: Path<i32>,
     pool: Data<PgPool>,
-) -> Result<Json<Vec<User>>, errors::Error> {
+) -> Result<Json<Vec<UserDetails>>, errors::Error> {
     let game_id = game_id.into_inner();
     identity_matches_game_id(id, game_id)?;
 
@@ -27,7 +31,7 @@ mod tests {
     use auth::{PrivateClaim, Role};
     use db::{
         get_conn,
-        models::{Game, User},
+        models::{Game, User, UserDetails},
         new_pool,
         schema::{games, users},
     };
@@ -86,7 +90,7 @@ mod tests {
         let res = test_get(&format!("/api/games/{}/players", game.id), Some(cookie)).await;
         assert_eq!(res.0, 200);
 
-        let body: Vec<User> = res.1;
+        let body: Vec<UserDetails> = res.1;
         // only returns one, as second player is part of another game
         assert_eq!(body.len(), 1);
 

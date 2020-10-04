@@ -29,15 +29,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players">
-      <change afterPath="$PROJECT_DIR$/server/src/routes/rounds/score_round.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/src/models/round.rs" beforeDir="false" afterPath="$PROJECT_DIR$/db/src/models/round.rs" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/db/src/models/user.rs" beforeDir="false" afterPath="$PROJECT_DIR$/db/src/models/user.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/db/src/schema.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/routes/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/routes/rounds/mod.rs" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/rounds/mod.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/routes/rounds/status.rs" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/rounds/status.rs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/server/src/routes/games/get_players.rs" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/games/get_players.rs" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -201,12 +195,12 @@
     </state>
     <state x="2529" y="329" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596570477431" />
     <state x="1089" y="614" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598753485434" />
-    <state x="987" y="299" width="650" height="801" key="find.popup" timestamp="1601609759083">
+    <state x="1004" y="296" width="650" height="801" key="find.popup" timestamp="1601782722285">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="592" y="176" width="552" height="534" key="find.popup/0.0.1536.824@0.0.1536.824" timestamp="1600394790719" />
     <state x="555" y="210" width="568" height="502" key="find.popup/0.23.1440.877@0.23.1440.877" timestamp="1597259489101" />
-    <state x="987" y="299" width="650" height="801" key="find.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1601609759083" />
+    <state x="1004" y="296" width="650" height="801" key="find.popup/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1601782722285" />
     <state x="595" y="426" key="new project wizard" timestamp="1598741258192">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
