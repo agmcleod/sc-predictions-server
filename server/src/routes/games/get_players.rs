@@ -135,7 +135,7 @@ mod tests {
         let res = test_get(&format!("/api/games/{}/players", game.id), Some(token)).await;
         assert_eq!(res.0, 200);
 
-        let body: Vec<User> = res.1;
+        let body: Vec<UserDetails> = res.1;
         // returns both as they are both apart of this game
         assert_eq!(body.len(), 2);
 
