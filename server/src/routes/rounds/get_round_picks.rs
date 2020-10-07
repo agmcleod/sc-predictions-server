@@ -13,6 +13,7 @@ use errors::Error;
 #[derive(Deserialize, PartialEq, Serialize)]
 pub struct GetRoundPicksResponse {
     data: Vec<UserAnswer>,
+    locked: bool,
 }
 
 pub async fn get_round_picks(
@@ -24,18 +25,19 @@ pub async fn get_round_picks(
         return Err(Error::Forbidden);
     }
 
-    let user_questions = block(move || {
+    let (user_questions, locked) = block(move || {
         let conn = get_conn(&pool)?;
 
         let round = Round::get_active_round_by_game_id(&conn, claim.game_id)?;
 
         let user_questions = UserQuestion::find_by_round(&conn, round.id)?;
-        Ok(user_questions)
+        Ok((user_questions, round.locked))
     })
     .await?;
 
     Ok(Json(GetRoundPicksResponse {
         data: user_questions,
+        locked,
     }))
 }
 
@@ -164,6 +166,8 @@ mod tests {
         let second_pick = &body.data[1];
         assert_eq!(second_pick.user_name, "agmcleod");
         assert_eq!(second_pick.answer, "two");
+
+        assert_eq!(body.locked, false);
 
         clear_game_data(&conn);
     }

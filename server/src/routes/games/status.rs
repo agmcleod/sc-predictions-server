@@ -15,6 +15,7 @@ use errors;
 pub struct StatusResponse {
     slug: String,
     open_round: bool,
+    unfinished_round: bool,
 }
 
 pub async fn status(
@@ -39,6 +40,12 @@ pub async fn status(
         open_round: rounds.iter().fold(false, |result: bool, round: &Round| {
             // if there is a round that's not locked, we want to return true
             if !round.locked {
+                return true;
+            }
+            result
+        }),
+        unfinished_round: rounds.iter().fold(false, |result: bool, round: &Round| {
+            if !round.finished {
                 return true;
             }
             result
@@ -74,6 +81,7 @@ mod tests {
         pub player_two: String,
         pub game_id: i32,
         pub locked: bool,
+        pub finished: bool,
     }
 
     #[actix_rt::test]
@@ -94,6 +102,7 @@ mod tests {
                 player_two: "two".to_string(),
                 game_id: game.id,
                 locked: true,
+                finished: false,
             })
             .execute(&conn)
             .unwrap();
@@ -104,6 +113,7 @@ mod tests {
                 player_two: "two".to_string(),
                 game_id: game.id,
                 locked: true,
+                finished: false,
             })
             .execute(&conn)
             .unwrap();
@@ -121,6 +131,7 @@ mod tests {
                 player_two: "two".to_string(),
                 game_id: other_game.id,
                 locked: false,
+                finished: false,
             })
             .execute(&conn)
             .unwrap();
@@ -137,6 +148,7 @@ mod tests {
 
         assert_eq!(res.1.slug, "abc123");
         assert_eq!(res.1.open_round, false);
+        assert_eq!(res.1.unfinished_round, true);
 
         diesel::delete(rounds::table).execute(&conn).unwrap();
         diesel::delete(games::table).execute(&conn).unwrap();
@@ -160,6 +172,7 @@ mod tests {
                 player_two: "two".to_string(),
                 game_id: game.id,
                 locked: true,
+                finished: true,
             })
             .execute(&conn)
             .unwrap();
@@ -170,6 +183,7 @@ mod tests {
                 player_two: "two".to_string(),
                 game_id: game.id,
                 locked: true,
+                finished: true,
             })
             .execute(&conn)
             .unwrap();
@@ -180,6 +194,7 @@ mod tests {
                 player_two: "two".to_string(),
                 game_id: game.id,
                 locked: false,
+                finished: true,
             })
             .execute(&conn)
             .unwrap();
@@ -196,6 +211,7 @@ mod tests {
 
         assert_eq!(res.1.slug, "abc123");
         assert_eq!(res.1.open_round, true);
+        assert_eq!(res.1.unfinished_round, false);
 
         diesel::delete(rounds::table).execute(&conn).unwrap();
         diesel::delete(games::table).execute(&conn).unwrap();
