@@ -127,7 +127,6 @@ mod tests {
     #[derive(Serialize, Insertable)]
     #[table_name = "games"]
     struct NewGame {
-        pub locked: bool,
         pub slug: Option<String>,
     }
 
@@ -141,10 +140,7 @@ mod tests {
             .unwrap();
 
         let game: Game = diesel::insert_into(games::table)
-            .values(NewGame {
-                locked: false,
-                slug: None,
-            })
+            .values(NewGame { slug: None })
             .get_result(conn)
             .unwrap();
 

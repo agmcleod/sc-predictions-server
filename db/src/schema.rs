@@ -11,7 +11,6 @@ table! {
 table! {
     games (id) {
         id -> Int4,
-        locked -> Bool,
         slug -> Nullable<Varchar>,
         created_at -> Timestamptz,
         updated_at -> Timestamptz,

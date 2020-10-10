@@ -11,7 +11,6 @@ use crate::utils::create_slug_from_id;
 #[derive(Debug, Identifiable, Serialize, Deserialize, Queryable)]
 pub struct Game {
     pub id: i32,
-    pub locked: bool,
     pub slug: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,

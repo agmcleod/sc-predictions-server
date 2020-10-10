@@ -43,7 +43,6 @@ mod tests {
     #[derive(Insertable)]
     #[table_name = "games"]
     struct NewGame {
-        locked: bool,
         slug: Option<String>,
     }
 
@@ -63,7 +62,6 @@ mod tests {
 
         let game: Game = diesel::insert_into(games::table)
             .values(NewGame {
-                locked: true,
                 slug: Some("abc123".to_string()),
             })
             .get_result(&conn)
@@ -112,7 +110,6 @@ mod tests {
 
         let game: Game = diesel::insert_into(games::table)
             .values(NewGame {
-                locked: true,
                 slug: Some("abc123".to_string()),
             })
             .get_result(&conn)
@@ -154,7 +151,6 @@ mod tests {
 
         let game: Game = diesel::insert_into(games::table)
             .values(NewGame {
-                locked: true,
                 slug: Some("abc123".to_string()),
             })
             .get_result(&conn)
