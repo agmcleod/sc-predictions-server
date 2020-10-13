@@ -2,7 +2,7 @@
 
 **Project Status**
 
-At present not really working on this. I hit challenges on trying to make error handling + validations work. Feels like a lot of high friction. Actix has recently hit version 2, so I may try to revisit.
+Feature complete at this point, needs some design tweaking on front end. Further changes can be done to add cleanup process to remove stale/complete games.
 
 **Description**
 
