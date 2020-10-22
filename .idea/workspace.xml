@@ -28,13 +28,7 @@
     <cargoProject FILE="$PROJECT_DIR$/errors/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/src/models/game.rs" beforeDir="false" afterPath="$PROJECT_DIR$/db/src/models/game.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/db/src/schema.rs" beforeDir="false" afterPath="$PROJECT_DIR$/db/src/schema.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/routes/games/join.rs" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/games/join.rs" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server/src/routes/rounds/lock_round.rs" beforeDir="false" afterPath="$PROJECT_DIR$/server/src/routes/rounds/lock_round.rs" afterDir="false" />
-    </list>
+    <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

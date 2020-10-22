@@ -217,7 +217,7 @@ mod tests {
         let pool = new_pool();
         let conn = get_conn(&pool).unwrap();
 
-        let (game, questions, round, user) = create_data(&conn);
+        let (game, questions, round, _) = create_data(&conn);
 
         diesel::update(rounds::dsl::rounds.find(round.id))
             .set(rounds::dsl::finished.eq(true))

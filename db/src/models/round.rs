@@ -73,7 +73,7 @@ impl Round {
         game_id: i32,
     ) -> Result<Round, Error> {
         use rounds::dsl::{
-            created_at, finished, game_id as game_id_field, locked, rounds as rounds_table,
+            finished, game_id as game_id_field, locked, rounds as rounds_table,
         };
 
         let round = rounds_table

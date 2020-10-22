@@ -56,7 +56,6 @@ mod tests {
         schema::{
             game_questions, games, questions as questions_dsl, rounds, user_questions, users,
         },
-        PgPool,
     };
     use errors::ErrorResponse;
 
@@ -150,7 +149,7 @@ mod tests {
     async fn test_get_round_picks() {
         let pool = new_pool();
         let conn = get_conn(&pool).unwrap();
-        let (game, user, _, new_user_questions) = create_test_data(&conn);
+        let (game, _, _, _) = create_test_data(&conn);
 
         let claim = PrivateClaim::new(game.id, game.slug.unwrap().clone(), game.id, Role::Owner);
 
@@ -176,7 +175,7 @@ mod tests {
     async fn test_get_round_picks_role_not_owner() {
         let pool = new_pool();
         let conn = get_conn(&pool).unwrap();
-        let (game, user, _, new_user_questions) = create_test_data(&conn);
+        let (game, _, _, _) = create_test_data(&conn);
 
         let claim = PrivateClaim::new(game.id, game.slug.unwrap().clone(), game.id, Role::Player);
 
@@ -192,7 +191,7 @@ mod tests {
     async fn test_get_round_picks_no_active_round() {
         let pool = new_pool();
         let conn = get_conn(&pool).unwrap();
-        let (game, user, round, new_user_questions) = create_test_data(&conn);
+        let (game, _, round, _) = create_test_data(&conn);
 
         diesel::update(rounds::dsl::rounds.find(round.id))
             .set(rounds::dsl::locked.eq(true))

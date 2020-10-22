@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use auth::{get_claim_from_identity, PrivateClaim, Role};
 use db::{
     get_conn,
-    models::{GameQuestion, QuestionDetails, Round, UserQuestion},
+    models::{GameQuestion, Round, UserQuestion},
     PgPool,
 };
 use errors::Error;

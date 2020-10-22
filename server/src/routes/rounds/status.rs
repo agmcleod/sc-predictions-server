@@ -55,7 +55,6 @@ mod tests {
         new_pool,
         schema::{game_questions, games, questions, rounds},
     };
-    use errors::ErrorResponse;
 
     #[derive(Insertable)]
     #[table_name = "games"]

@@ -1,6 +1,6 @@
 use actix_identity::Identity;
 use actix_web::{
-    web::{block, Data, HttpResponse, Json},
+    web::{block, Data, HttpResponse},
     Result,
 };
 

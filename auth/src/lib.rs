@@ -61,8 +61,8 @@ impl IdentityPolicy for AuthHeaderIdentityPolicy {
 
         if let Some(auth_token) = auth_token {
             let token_string = auth_token.to_str();
-            if token_string.is_ok() {
-                token = Some(String::from(token_string.unwrap()).replace("Bearer ", ""));
+            if let Ok(token_string) = token_string {
+                token = Some(String::from(token_string).replace("Bearer ", ""));
             }
         }
 
