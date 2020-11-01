@@ -8,7 +8,7 @@ use std::env;
 
 use actix_cors::Cors;
 use actix_rt;
-use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer};
+use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer, http};
 use dotenv::dotenv;
 use env_logger;
 
@@ -28,10 +28,12 @@ async fn main() -> std::io::Result<()> {
     let pool = db::new_pool();
 
     HttpServer::new(move || {
-        let cors = Cors::new()
+        let cors = Cors::default()
             .allowed_origin(&env::var("CLIENT_HOST").unwrap())
-            .max_age(3600)
-            .finish();
+            .allow_any_method()
+            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT, http::header::CONTENT_TYPE])
+            // .allow_any_header()
+            .max_age(3600);
 
         App::new()
             .wrap(cors)

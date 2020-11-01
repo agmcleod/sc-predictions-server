@@ -28,7 +28,9 @@
     <cargoProject FILE="$PROJECT_DIR$/errors/Cargo.toml" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players" />
+    <list default="true" id="2af11a0d-fccf-42e8-82da-85fbe2d7d208" name="Default Changelist" comment="working on auth flow, trying to get tests for get_players">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -57,13 +59,13 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="TERMINAL_CUSTOM_COMMANDS_GOT_IT" value="true" />
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$1/New Scratch File" value="Rust" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/server" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../adventofcode-2019" />
     <property name="org.rust.cargo.project.model.PROJECT_DISCOVERY" value="true" />
     <property name="org.rust.disableDetachedFileInspectionC:/Users/Aaron/Documents/src/rust/sc-predictions/sc-predictions-server/src/bin/seeds.rs" value="true" />
     <property name="project.structure.last.edited" value="Modules" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="language.rust.rustfmt" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -136,10 +138,10 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="906" y="378" key="#Inspections/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598740805137" />
-    <state x="734" y="355" width="1092" height="714" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1598748796939">
+    <state x="734" y="355" width="1092" height="714" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1602814648089">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="734" y="355" width="1092" height="714" key="#com.intellij.execution.impl.EditConfigurationsDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598748796939" />
+    <state x="734" y="355" width="1092" height="714" key="#com.intellij.execution.impl.EditConfigurationsDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1602814648089" />
     <state x="960" y="436" key="#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog" timestamp="1599411035370">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -148,10 +150,10 @@
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="1082" y="529" key="ExperimentsDialog/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1595958409214" />
-    <state x="1059" y="454" key="FileChooserDialogImpl" timestamp="1598753682038">
+    <state x="1059" y="454" key="FileChooserDialogImpl" timestamp="1602729881208">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
-    <state x="1059" y="454" key="FileChooserDialogImpl/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598753682038" />
+    <state x="1059" y="454" key="FileChooserDialogImpl/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1602729881208" />
     <state width="2517" height="403" key="GridCell.Tab.0.bottom" timestamp="1598748363958">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
@@ -176,12 +178,12 @@
     <state width="2105" height="174" key="GridCell.Tab.0.right/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1597410504223" />
     <state width="1398" height="174" key="GridCell.Tab.0.right/0.23.1440.877@0.23.1440.877" timestamp="1597346184984" />
     <state width="2517" height="403" key="GridCell.Tab.0.right/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598748363958" />
-    <state x="781" y="345" width="1427" height="940" key="SettingsEditor" timestamp="1598741287703">
+    <state x="781" y="345" width="1427" height="940" key="SettingsEditor" timestamp="1602814751507">
       <screen x="0" y="0" width="2560" height="1400" />
     </state>
     <state x="2220" y="-42" key="SettingsEditor/0.23.1440.877/1440.-292.2560.1417@1440.-292.2560.1417" timestamp="1596136907013" />
     <state x="439" y="178" key="SettingsEditor/0.23.1440.877@0.23.1440.877" timestamp="1595970002424" />
-    <state x="781" y="345" width="1427" height="940" key="SettingsEditor/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1598741287703" />
+    <state x="781" y="345" width="1427" height="940" key="SettingsEditor/2560.0.1920.1040/0.0.2560.1400@0.0.2560.1400" timestamp="1602814751507" />
     <state x="2114" y="156" key="Vcs.Push.Dialog.v2" timestamp="1597266221285">
       <screen x="1440" y="-292" width="2560" height="1417" />
     </state>
