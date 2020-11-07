@@ -16,6 +16,7 @@ mod middleware;
 mod routes;
 mod tests;
 mod validate;
+mod websocket;
 
 use crate::routes::routes;
 use errors::ErrorResponse;
@@ -42,6 +43,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(auth::get_identity_service())
             .data(pool.clone())
             .configure(routes)
+            .service(web::resource("/ws/").route(web::get().to(websocket::ws_index)))
             .default_service(
                 web::route()
                     .to(|| HttpResponse::NotFound().json::<ErrorResponse>("Not Found".into())),

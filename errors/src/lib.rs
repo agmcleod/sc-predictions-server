@@ -3,6 +3,7 @@ extern crate log;
 
 use actix_web::{
     error::{BlockingError, ResponseError},
+    Error as ActixError,
     HttpResponse,
 };
 use derive_more::Display;
@@ -113,5 +114,11 @@ impl From<BlockingError<Error>> for Error {
             BlockingError::Error(error) => error,
             BlockingError::Canceled => Error::BlockingError("Thread blocking error".into()),
         }
+    }
+}
+
+impl From <ActixError> for Error {
+    fn from(error: ActixError) -> Error {
+       Error::InternalServerError(error.to_string())
     }
 }
