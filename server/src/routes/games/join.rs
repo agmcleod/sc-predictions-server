@@ -2,16 +2,20 @@ use actix_web::{
     web::{block, Data, Json},
     Result,
 };
+use actix::Addr;
 use serde::{Deserialize, Serialize};
+use serde_json::to_value;
 use validator::Validate;
 
-use crate::validate::validate;
 use db::{
     get_conn,
     models::{Game, User},
     PgPool,
 };
 use errors::Error;
+
+use crate::validate::validate;
+use crate::websocket::{ServerMessage, Server};
 
 #[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct JoinRequest {
@@ -21,20 +25,27 @@ pub struct JoinRequest {
     slug: String,
 }
 
-pub async fn join(pool: Data<PgPool>, params: Json<JoinRequest>) -> Result<Json<User>, Error> {
+pub async fn join(pool: Data<PgPool>, websocket_srv: Addr<Server>, params: Json<JoinRequest>) -> Result<Json<User>, Error> {
     validate(&params)?;
     let connection = get_conn(&pool).unwrap();
 
-    let user = block(move || {
+    let (new_user, users, game_id) = block(move || {
         let game = Game::find_by_slug(&connection, &params.slug)?;
         if User::find_by_game_id_and_name(&connection, game.id, &params.name).is_ok() {
             return Err(Error::UnprocessableEntity("Username is taken".to_string()));
         }
-        User::create(&connection, params.name.clone(), game.id)
+        let new_user = User::create(&connection, params.name.clone(), game.id)?;
+        let users = User::find_all_by_game_id(&connection, game.id)?;
+        Ok((new_user, users, game.id))
     })
     .await?;
 
-    Ok(Json(user))
+    if let Ok(value) = to_value(users) {
+        let msg = ServerMessage::new("/players", game_id, value);
+        websocket_srv.do_send(msg);
+    }
+
+    Ok(Json(new_user))
 }
 
 #[cfg(test)]

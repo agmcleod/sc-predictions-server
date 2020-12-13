@@ -2,10 +2,13 @@
 #[macro_use]
 extern crate diesel;
 #[macro_use]
+extern crate log;
+#[macro_use]
 extern crate validator_derive;
 
 use std::env;
 
+use actix::Actor;
 use actix_cors::Cors;
 use actix_rt;
 use actix_web::{middleware::Logger, web, App, HttpResponse, HttpServer, http};
@@ -19,6 +22,7 @@ mod validate;
 mod websocket;
 
 use crate::routes::routes;
+use db;
 use errors::ErrorResponse;
 
 #[actix_rt::main]
@@ -27,6 +31,8 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let pool = db::new_pool();
+
+    let server = websocket::Server::new(pool.clone()).start();
 
     HttpServer::new(move || {
         let cors = Cors::default()
@@ -42,6 +48,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::new("%a %{User-Agent}i"))
             .wrap(auth::get_identity_service())
             .data(pool.clone())
+            .data(server.clone())
             .configure(routes)
             .default_service(
                 web::route()
