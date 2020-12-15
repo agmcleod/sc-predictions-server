@@ -1,11 +1,11 @@
 use std::collections::HashMap;
 
-use actix::{prelude::{Actor, Context, Handler, Message as ActixMessage, MessageResult, Recipient}};
+use actix::prelude::{Actor, Context, Handler, Message as ActixMessage, MessageResult, Recipient};
 use serde::Serialize;
-use serde_json::{Value, to_string};
+use serde_json::{to_string, Value};
 
 use auth::{decode_jwt, PrivateClaim};
-use db::{PgPool};
+use db::PgPool;
 
 #[derive(ActixMessage)]
 #[rtype(result = "()")]
@@ -36,10 +36,7 @@ struct Session {
 
 impl Session {
     fn new(addr: Recipient<Message>) -> Self {
-        Session {
-            addr,
-            token: None,
-        }
+        Session { addr, token: None }
     }
 }
 
@@ -78,17 +75,21 @@ impl Handler<Auth> for Server {
         if private_claim.is_ok() {
             if !self.sessions.contains_key(&msg.id) {
                 error!("Session not found: {}", msg.id);
-                return
+                return;
             }
             self.sessions.get_mut(&msg.id).unwrap().token = msg.token.clone();
             let private_claim = private_claim.unwrap();
             if !self.game_to_sessions.contains_key(&private_claim.game_id) {
-                self.game_to_sessions.insert(private_claim.game_id, Vec::new());
+                self.game_to_sessions
+                    .insert(private_claim.game_id, Vec::new());
             }
 
-            let mut sessions_for_game = self.game_to_sessions.get_mut(&private_claim.game_id).unwrap();
+            let mut sessions_for_game = self
+                .game_to_sessions
+                .get_mut(&private_claim.game_id)
+                .unwrap();
             sessions_for_game.push(msg.id.clone());
-         }
+        }
     }
 }
 

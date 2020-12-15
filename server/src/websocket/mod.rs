@@ -1,6 +1,10 @@
 use std::time::{Duration, Instant};
 
-use actix::{ActorContext, AsyncContext, fut, Handler, prelude::{Actor, Addr, StreamHandler}};
+use actix::{
+    fut,
+    prelude::{Actor, Addr, StreamHandler},
+    ActorContext, AsyncContext, Handler,
+};
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
 use serde::Deserialize;
@@ -30,7 +34,12 @@ pub struct WebSocketSession {
 
 impl WebSocketSession {
     fn new(server_addr: Addr<Server>) -> Self {
-        Self { id: Uuid::new_v4().to_string(), hb: Instant::now(), token: None, server_addr }
+        Self {
+            id: Uuid::new_v4().to_string(),
+            hb: Instant::now(),
+            token: None,
+            server_addr,
+        }
     }
 
     fn send_heartbeat(&self, ctx: &mut <Self as Actor>::Context) {
@@ -82,11 +91,7 @@ impl Handler<Message> for WebSocketSession {
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebSocketSession {
-    fn handle(
-        &mut self,
-        msg: Result<ws::Message, ws::ProtocolError>,
-        ctx: &mut Self::Context,
-    ) {
+    fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         match msg {
             Ok(ws::Message::Ping(msg)) => {
                 self.hb = Instant::now();
@@ -102,17 +107,18 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebSocketSession 
                     let args: Vec<&str> = message.splitn(2, ' ').collect();
                     match args[0] {
                         "/auth" => {
-                            let params: Result<AuthReq, serde_json::Error> = serde_json::from_str(args[1]);
+                            let params: Result<AuthReq, serde_json::Error> =
+                                serde_json::from_str(args[1]);
                             if let Ok(params) = params {
                                 self.server_addr.do_send(msg)
                             } else {
                                 ctx.text("Invalid request params");
                             }
-                        },
-                        _ => ctx.text(format!("unknown command {:?}", message))
+                        }
+                        _ => ctx.text(format!("unknown command {:?}", message)),
                     }
                 }
-            },
+            }
             Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
             Ok(ws::Message::Close(reason)) => {
                 ctx.close(reason);
@@ -123,8 +129,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebSocketSession 
     }
 }
 
-pub async fn ws_index(req: HttpRequest, stream: web::Payload, server_addr: web::Data<Addr<Server>>) -> Result<HttpResponse, Error> {
-    let res = ws::start(WebSocketSession::new(server_addr.get_ref().clone()), &req, stream)?;
+pub async fn ws_index(
+    req: HttpRequest,
+    stream: web::Payload,
+    server_addr: web::Data<Addr<Server>>,
+) -> Result<HttpResponse, Error> {
+    let res = ws::start(
+        WebSocketSession::new(server_addr.get_ref().clone()),
+        &req,
+        stream,
+    )?;
 
     Ok(res)
 }

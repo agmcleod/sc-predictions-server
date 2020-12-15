@@ -72,9 +72,7 @@ impl Round {
         conn: &PgConnection,
         game_id: i32,
     ) -> Result<Round, Error> {
-        use rounds::dsl::{
-            finished, game_id as game_id_field, locked, rounds as rounds_table,
-        };
+        use rounds::dsl::{finished, game_id as game_id_field, locked, rounds as rounds_table};
 
         let round = rounds_table
             .filter(game_id_field.eq(game_id))

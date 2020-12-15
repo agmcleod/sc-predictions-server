@@ -3,8 +3,7 @@ extern crate log;
 
 use actix_web::{
     error::{BlockingError, ResponseError},
-    Error as ActixError,
-    HttpResponse,
+    Error as ActixError, HttpResponse,
 };
 use derive_more::Display;
 use diesel::result::{DatabaseErrorKind, Error as DBError};
@@ -117,8 +116,8 @@ impl From<BlockingError<Error>> for Error {
     }
 }
 
-impl From <ActixError> for Error {
+impl From<ActixError> for Error {
     fn from(error: ActixError) -> Error {
-       Error::InternalServerError(error.to_string())
+        Error::InternalServerError(error.to_string())
     }
 }

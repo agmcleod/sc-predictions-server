@@ -1,8 +1,8 @@
+use actix::Addr;
 use actix_web::{
     web::{block, Data, Json},
     Result,
 };
-use actix::Addr;
 use serde::{Deserialize, Serialize};
 use serde_json::to_value;
 use validator::Validate;
@@ -15,7 +15,7 @@ use db::{
 use errors::Error;
 
 use crate::validate::validate;
-use crate::websocket::{ServerMessage, Server};
+use crate::websocket::{Server, ServerMessage};
 
 #[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct JoinRequest {
@@ -25,7 +25,11 @@ pub struct JoinRequest {
     slug: String,
 }
 
-pub async fn join(pool: Data<PgPool>, websocket_srv: Addr<Server>, params: Json<JoinRequest>) -> Result<Json<User>, Error> {
+pub async fn join(
+    pool: Data<PgPool>,
+    websocket_srv: Addr<Server>,
+    params: Json<JoinRequest>,
+) -> Result<Json<User>, Error> {
     validate(&params)?;
     let connection = get_conn(&pool).unwrap();
 
