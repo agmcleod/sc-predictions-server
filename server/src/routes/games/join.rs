@@ -15,7 +15,7 @@ use db::{
 use errors::Error;
 
 use crate::validate::validate;
-use crate::websocket::{Server, ServerMessage};
+use crate::websocket::{MessageToClient, Server};
 
 #[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct JoinRequest {
@@ -27,7 +27,7 @@ pub struct JoinRequest {
 
 pub async fn join(
     pool: Data<PgPool>,
-    websocket_srv: Addr<Server>,
+    websocket_srv: Data<Addr<Server>>,
     params: Json<JoinRequest>,
 ) -> Result<Json<User>, Error> {
     validate(&params)?;
@@ -45,7 +45,7 @@ pub async fn join(
     .await?;
 
     if let Ok(value) = to_value(users) {
-        let msg = ServerMessage::new("/players", game_id, value);
+        let msg = MessageToClient::new("/players", game_id, value);
         websocket_srv.do_send(msg);
     }
 

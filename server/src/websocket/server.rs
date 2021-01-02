@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use actix::prelude::{Actor, Context, Handler, Message as ActixMessage, MessageResult, Recipient};
+use actix::prelude::{Actor, Context, Handler, Message as ActixMessage, Recipient};
 use serde::Serialize;
 use serde_json::{to_string, Value};
 
@@ -9,18 +9,18 @@ use db::PgPool;
 
 #[derive(ActixMessage)]
 #[rtype(result = "()")]
-pub struct Message(String);
+pub struct Message(pub String);
 
 #[derive(ActixMessage, Serialize)]
 #[rtype(result = "()")]
-pub struct ServerMessage {
+pub struct MessageToClient {
     pub path: String,
     pub data: Value,
     pub game_id: i32,
 }
 
-impl ServerMessage {
-    pub fn new(path: &str, game_id: i32, data: Value) -> ServerMessage {
+impl MessageToClient {
+    pub fn new(path: &str, game_id: i32, data: Value) -> MessageToClient {
         Self {
             path: path.to_string(),
             data,
@@ -63,8 +63,8 @@ impl Actor for Server {
 #[derive(ActixMessage)]
 #[rtype(result = "()")]
 pub struct Auth {
-    id: String,
-    token: String,
+    pub id: String,
+    pub token: String,
 }
 
 impl Handler<Auth> for Server {
@@ -77,14 +77,14 @@ impl Handler<Auth> for Server {
                 error!("Session not found: {}", msg.id);
                 return;
             }
-            self.sessions.get_mut(&msg.id).unwrap().token = msg.token.clone();
+            self.sessions.get_mut(&msg.id).unwrap().token = Some(msg.token.clone());
             let private_claim = private_claim.unwrap();
             if !self.game_to_sessions.contains_key(&private_claim.game_id) {
                 self.game_to_sessions
                     .insert(private_claim.game_id, Vec::new());
             }
 
-            let mut sessions_for_game = self
+            let sessions_for_game = self
                 .game_to_sessions
                 .get_mut(&private_claim.game_id)
                 .unwrap();
@@ -103,20 +103,25 @@ pub struct Connect {
 impl Handler<Connect> for Server {
     type Result = ();
 
-    fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: Connect, _: &mut Context<Self>) {
         self.sessions.insert(msg.id.clone(), Session::new(msg.addr));
     }
 }
 
-impl Handler<ServerMessage> for Server {
+impl Handler<MessageToClient> for Server {
     type Result = ();
 
-    fn handle(&mut self, msg: ServerMessage, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: MessageToClient, _: &mut Context<Self>) -> Self::Result {
         if let Some(session_ids) = self.game_to_sessions.get(&msg.game_id) {
             for id in session_ids {
                 if let Some(session) = self.sessions.get(id) {
                     if let Ok(data) = to_string(&msg) {
-                        session.addr.do_send(Message(data));
+                        match session.addr.do_send(Message(data)) {
+                            Err(err) => {
+                                error!("Error sending client message: {:?}", err);
+                            }
+                            _ => {}
+                        }
                     }
                 }
             }

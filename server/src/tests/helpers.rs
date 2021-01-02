@@ -2,15 +2,18 @@
 pub mod tests {
     use std::time::SystemTime;
 
+    use actix::Actor;
     use actix_http::Request;
     use actix_service::Service;
     use actix_web::{body::Body, dev::ServiceResponse, error::Error, test, App};
     use serde::{de::DeserializeOwned, Deserialize, Serialize};
     use serde_json;
 
-    use crate::routes::routes;
     use auth::{create_jwt, get_identity_service, PrivateClaim};
     use db;
+
+    use crate::routes::routes;
+    use crate::websocket::Server;
 
     #[derive(Deserialize, Serialize, Debug)]
     struct CookieValue {
@@ -27,6 +30,7 @@ pub mod tests {
             App::new()
                 .wrap(get_identity_service())
                 .data(db::new_pool())
+                .data(Server::new(db::new_pool()).start())
                 .configure(routes),
         )
         .await

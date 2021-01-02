@@ -1,26 +1,41 @@
+use actix::Addr;
 use actix_identity::Identity;
 use actix_web::{
     web::{block, Data, HttpResponse},
     Result,
 };
+use serde_json::to_value;
 
 use auth::{get_claim_from_identity, Role};
 use db::{get_conn, models::Round, PgPool};
 use errors::Error;
 
-pub async fn lock_round(id: Identity, pool: Data<PgPool>) -> Result<HttpResponse, Error> {
+use crate::handlers;
+use crate::websocket::{MessageToClient, Server};
+
+pub async fn lock_round(
+    id: Identity,
+    websocket_srv: Data<Addr<Server>>,
+    pool: Data<PgPool>,
+) -> Result<HttpResponse, Error> {
     let (claim, _) = get_claim_from_identity(id)?;
     if claim.role != Role::Owner {
         return Err(Error::Forbidden);
     }
 
-    block(move || {
+    let (conn, claim) = block(move || {
         let conn = get_conn(&pool)?;
         let round = Round::get_active_round_by_game_id(&conn, claim.game_id)?;
         Round::lock(&conn, round.id)?;
-        Ok(())
+        Ok((conn, claim))
     })
     .await?;
+
+    let status_response = handlers::get_round_status(conn, claim.game_id).await?;
+    if let Ok(value) = to_value(status_response) {
+        let msg = MessageToClient::new("/current-round", claim.game_id, value);
+        websocket_srv.do_send(msg);
+    }
 
     Ok(HttpResponse::Ok().json(()))
 }

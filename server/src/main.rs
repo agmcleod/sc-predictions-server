@@ -15,6 +15,7 @@ use actix_web::{http, middleware::Logger, web, App, HttpResponse, HttpServer};
 use dotenv::dotenv;
 use env_logger;
 
+mod handlers;
 mod middleware;
 mod routes;
 mod tests;

@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
+use actix::Addr;
 use actix_identity::Identity;
 use actix_web::web::{block, Data, HttpResponse, Json};
 use serde::{Deserialize, Serialize};
+use serde_json::to_value;
 
 use auth::{get_claim_from_identity, Role};
 use db::{
@@ -11,6 +13,9 @@ use db::{
     PgPool,
 };
 use errors::Error;
+
+use crate::handlers;
+use crate::websocket::{MessageToClient, Server};
 
 #[derive(Deserialize, Serialize)]
 pub struct Answer {
@@ -25,6 +30,7 @@ pub struct Params {
 
 pub async fn score_round(
     id: Identity,
+    websocket_srv: Data<Addr<Server>>,
     pool: Data<PgPool>,
     params: Json<Params>,
 ) -> Result<HttpResponse, Error> {
@@ -34,7 +40,7 @@ pub async fn score_round(
         return Err(Error::Forbidden);
     }
 
-    block(move || {
+    let (conn, claim) = block(move || {
         let conn = get_conn(&pool)?;
 
         let round = Round::get_unfinished_round_by_game_id(&conn, claim.game_id)?;
@@ -60,9 +66,15 @@ pub async fn score_round(
 
         Round::finish(&conn, round.id)?;
 
-        Ok(())
+        Ok((conn, claim))
     })
     .await?;
+
+    let status_response = handlers::get_round_status(conn, claim.game_id).await?;
+    if let Ok(value) = to_value(status_response) {
+        let msg = MessageToClient::new("/current-round", claim.game_id, value);
+        websocket_srv.do_send(msg);
+    }
 
     Ok(HttpResponse::Ok().json(()))
 }

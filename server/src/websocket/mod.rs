@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use actix::{
     fut,
     prelude::{Actor, Addr, StreamHandler},
-    ActorContext, AsyncContext, Handler,
+    ActorContext, ActorFuture, AsyncContext, ContextFutureSpawner, Handler, WrapFuture,
 };
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
@@ -65,28 +65,29 @@ impl Actor for WebSocketSession {
     fn started(&mut self, ctx: &mut Self::Context) {
         self.send_heartbeat(ctx);
 
-        let addr = ctx.address();
-        addr.send(Connect {
-            addr: addr.recipient(),
-            id: self.id.clone(),
-        })
-        .into_actor(self)
-        .then(|res, act, ctx| {
-            match res {
-                Ok(res) => act.id = res,
-                _ => ctx.stop(),
-            }
-            fut::ready(())
-        })
-        .wait(ctx);
+        let session_addr = ctx.address();
+        self.server_addr
+            .send(Connect {
+                addr: session_addr.recipient(),
+                id: self.id.clone(),
+            })
+            .into_actor(self)
+            .then(|res, _act, ctx| {
+                match res {
+                    Ok(_res) => {}
+                    _ => ctx.stop(),
+                }
+                fut::ready(())
+            })
+            .wait(ctx);
     }
 }
 
 impl Handler<Message> for WebSocketSession {
     type Result = ();
 
-    fn handle(&mut self, msg: server::Message, ctx: &mut Self::Context) {
-        ctx.text(format!("{}, {}", msg.path, msg.data));
+    fn handle(&mut self, msg: Message, ctx: &mut Self::Context) {
+        ctx.text(msg.0);
     }
 }
 
@@ -110,7 +111,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebSocketSession 
                             let params: Result<AuthReq, serde_json::Error> =
                                 serde_json::from_str(args[1]);
                             if let Ok(params) = params {
-                                self.server_addr.do_send(msg)
+                                self.server_addr.do_send(Auth {
+                                    id: self.id.clone(),
+                                    token: params.token,
+                                });
                             } else {
                                 ctx.text("Invalid request params");
                             }

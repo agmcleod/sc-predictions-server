@@ -1,22 +1,11 @@
 use actix_identity::Identity;
-use actix_web::web::{block, Data, Json, Path};
-use diesel::{BelongingToDsl, RunQueryDsl};
-use serde::{Deserialize, Serialize};
+use actix_web::web::{Data, Json, Path};
 
 use auth::identity_matches_game_id;
-use db::{
-    get_conn,
-    models::{Game, Round},
-    PgPool,
-};
+use db::{get_conn, PgPool};
 use errors;
 
-#[derive(Deserialize, Serialize)]
-pub struct StatusResponse {
-    slug: String,
-    open_round: bool,
-    unfinished_round: bool,
-}
+use crate::handlers::{get_round_status, StatusResponse};
 
 pub async fn status(
     id: Identity,
@@ -27,37 +16,15 @@ pub async fn status(
     identity_matches_game_id(id, game_id)?;
 
     let connection = get_conn(&pool)?;
-    let (game, rounds) = block(move || {
-        let game = Game::find_by_id(&connection, game_id)?;
-        let rounds = Round::belonging_to(&game).load::<Round>(&connection)?;
+    let response = get_round_status(connection, game_id).await?;
 
-        Ok((game, rounds))
-    })
-    .await?;
-
-    Ok(Json(StatusResponse {
-        slug: game.slug.unwrap_or_else(|| "".to_string()),
-        open_round: rounds.iter().fold(false, |result: bool, round: &Round| {
-            // if there is a round that's not locked, we want to return true
-            if !round.locked {
-                return true;
-            }
-            result
-        }),
-        unfinished_round: rounds.iter().fold(false, |result: bool, round: &Round| {
-            if !round.finished {
-                return true;
-            }
-            result
-        }),
-    }))
+    Ok(Json(response))
 }
 
 #[cfg(test)]
 mod tests {
     use diesel::{self, RunQueryDsl};
 
-    use crate::tests::helpers::tests::{get_auth_token, test_get};
     use auth::{PrivateClaim, Role};
     use db::{
         get_conn,
@@ -66,7 +33,8 @@ mod tests {
         schema::{games, rounds},
     };
 
-    use super::StatusResponse;
+    use crate::handlers::StatusResponse;
+    use crate::tests::helpers::tests::{get_auth_token, test_get};
 
     #[derive(Insertable)]
     #[table_name = "games"]
