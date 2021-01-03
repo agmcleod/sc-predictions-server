@@ -54,7 +54,8 @@ pub async fn join(
 
 #[cfg(test)]
 mod tests {
-    use crate::tests::helpers::tests::test_post;
+    use diesel::RunQueryDsl;
+
     use db::{
         get_conn,
         models::{Game, User},
@@ -64,7 +65,7 @@ mod tests {
     use errors::ErrorResponse;
 
     use super::JoinRequest;
-    use diesel::RunQueryDsl;
+    use crate::tests::helpers::tests::test_post;
 
     #[derive(Insertable)]
     #[table_name = "games"]

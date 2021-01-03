@@ -46,7 +46,7 @@ impl WebSocketSession {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
                 println!("Websocket Client heartbeat failed, disconnecting!");
-
+                act.server_addr.do_send(Disconnect { id: act.id.clone() });
                 // stop actor
                 ctx.stop();
 

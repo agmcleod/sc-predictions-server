@@ -108,6 +108,20 @@ impl Handler<Connect> for Server {
     }
 }
 
+#[derive(ActixMessage)]
+#[rtype(result = "()")]
+pub struct Disconnect {
+    pub id: String,
+}
+
+impl Handler<Disconnect> for Server {
+    type Result = ();
+
+    fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
+        self.sessions.remove(&msg.id);
+    }
+}
+
 impl Handler<MessageToClient> for Server {
     type Result = ();
 
