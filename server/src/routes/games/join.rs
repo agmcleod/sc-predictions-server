@@ -54,6 +54,7 @@ pub async fn join(
 
 #[cfg(test)]
 mod tests {
+    use actix_web::test;
     use diesel::RunQueryDsl;
 
     use db::{
@@ -65,7 +66,7 @@ mod tests {
     use errors::ErrorResponse;
 
     use super::JoinRequest;
-    use crate::tests::helpers::tests::test_post;
+    use crate::tests::helpers::tests::{get_test_server, test_post};
 
     #[derive(Insertable)]
     #[table_name = "games"]
@@ -92,21 +93,24 @@ mod tests {
             .get_result(&conn)
             .unwrap();
 
-        let res = test_post(
-            "/api/games/join",
-            JoinRequest {
+        let srv = get_test_server();
+
+        let req = srv.post("/api/games/join");
+        let mut res = req
+            .send_json(&JoinRequest {
                 name: "agmcleod".to_string(),
                 slug: game.slug.unwrap(),
-            },
-            None,
-        )
-        .await;
+            })
+            .await
+            .unwrap();
 
-        assert_eq!(res.0, 200);
+        assert_eq!(res.status().as_u16(), 200);
 
-        let user: User = res.1;
+        let user: User = res.json::<User>().await.unwrap();
 
         assert_eq!(user.user_name, "agmcleod");
+
+        srv.stop().await;
 
         diesel::delete(users::table).execute(&conn).unwrap();
         diesel::delete(games::table).execute(&conn).unwrap();

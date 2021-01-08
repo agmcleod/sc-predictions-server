@@ -36,6 +36,16 @@ pub mod tests {
         .await
     }
 
+    pub fn get_test_server() -> test::TestServer {
+        test::start(|| {
+            App::new()
+                .wrap(get_identity_service())
+                .data(db::new_pool())
+                .data(Server::new(db::new_pool()).start())
+                .configure(routes)
+        })
+    }
+
     /// Helper for HTTP GET integration tests
     pub async fn test_get<R>(route: &str, token: Option<String>) -> (u16, R)
     where
