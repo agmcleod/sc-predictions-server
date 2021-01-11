@@ -64,6 +64,7 @@ mod tests {
         schema::{games, users},
     };
     use errors::ErrorResponse;
+    use futures::StreamExt;
 
     use super::JoinRequest;
     use crate::tests::helpers::tests::{get_test_server, test_post};
@@ -100,7 +101,7 @@ mod tests {
 
         let ws_res = ws.connect().await.unwrap();
 
-        // let ws = srv.ws_at("/ws").await.unwrap();
+        // let (sink, stream) = ws_res.1.split();
 
         let req = srv.post("/api/games/join");
         let mut res = req
