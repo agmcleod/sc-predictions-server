@@ -54,7 +54,7 @@ pub async fn join(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::test;
+    use actix_web::client::Client;
     use diesel::RunQueryDsl;
 
     use db::{
@@ -94,6 +94,13 @@ mod tests {
             .unwrap();
 
         let srv = get_test_server();
+
+        let client = Client::default();
+        let ws = client.ws(srv.url("/ws/"));
+
+        let ws_res = ws.connect().await.unwrap();
+
+        // let ws = srv.ws_at("/ws").await.unwrap();
 
         let req = srv.post("/api/games/join");
         let mut res = req
