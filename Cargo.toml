@@ -1,3 +1,3 @@
 [workspace]
 
-members = ["auth", "db", "seeds", "server"]
+members = ["auth", "db", "errors", "seeds", "server"]

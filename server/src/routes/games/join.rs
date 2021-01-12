@@ -99,7 +99,7 @@ mod tests {
         let client = Client::default();
         let ws = client.ws(srv.url("/ws/"));
 
-        let ws_res = ws.connect().await.unwrap();
+        // let ws_res = ws.connect().await.unwrap();
 
         // let (sink, stream) = ws_res.1.split();
 
