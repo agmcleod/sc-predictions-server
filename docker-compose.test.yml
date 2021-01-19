@@ -1,23 +1,25 @@
-version: '3'
+version: "3"
 
 services:
-  server_test:
-    build: .
-    volumes:
-      - .:/app
-    environment:
-      DATABASE_URL: postgres://root@database_test/sc_predictions_test
-      CLIENT_HOST: http://localhost:3000
-      RUST_LOG: actix_web=debug
-      JWT_KEY: 432646294A404E635266546A576E5A7234753778214125442A472D4B61506453
-    links:
-      - database_test
-    depends_on:
-      - database_test
-    stdin_open: true
+  # server_test:
+  #   build: .
+  #   volumes:
+  #     - .:/app
+  #   environment:
+  #     DATABASE_URL: postgres://root@database_test/sc_predictions_test
+  #     CLIENT_HOST: http://localhost:3000
+  #     RUST_LOG: actix_web=debug
+  #     JWT_KEY: 432646294A404E635266546A576E5A7234753778214125442A472D4B61506453
+  #   links:
+  #     - database_test
+  #   depends_on:
+  #     - database_test
+  #   stdin_open: true
   database_test:
-    image: 'postgres:10.5'
+    image: "postgres:10.5"
+    ports:
+      - "5433:5432"
     environment:
       POSTGRES_USER: root
-      POSTGRES_PASSWORD: ''
+      POSTGRES_PASSWORD: ""
       POSTGRES_DB: sc_predictions_test

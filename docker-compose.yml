@@ -1,28 +1,28 @@
-version: '3'
+version: "3"
 
 services:
-  server:
-    build: .
-    command: cargo run --bin server
-    volumes:
-      - .:/app
-    ports:
-      - '8080:8080'
-    environment:
-      DATABASE_URL: postgres://root@database/sc_predictions
-      CLIENT_HOST: http://localhost:3000
-      RUST_BACKTRACE: full
-      RUST_LOG: actix_web=debug
-      JWT_KEY: 77397A244326452948404D635166546A576E5A7234753778214125442A472D4A
-    links:
-      - database
+  # server:
+  #   build: .
+  #   command: cargo run --bin server
+  #   volumes:
+  #     - .:/app
+  #   ports:
+  #     - '8080:8080'
+  #   environment:
+  #     DATABASE_URL: postgres://root@database/sc_predictions
+  #     CLIENT_HOST: http://localhost:3000
+  #     RUST_BACKTRACE: full
+  #     RUST_LOG: actix_web=debug
+  #
+  #   links:
+  #     - database
   database:
-    image: 'postgres:10.5'
+    image: "postgres:10.5"
     ports:
-      - '5432:5432'
+      - "5432:5432"
     environment:
       POSTGRES_USER: root
-      POSTGRES_PASSWORD: ''
+      POSTGRES_PASSWORD: ""
       POSTGRES_DB: sc_predictions
     volumes:
       - ./seeds:/seeds
