@@ -11,7 +11,7 @@ test:
 		CLIENT_HOST=http://localhost:3000 RUST_BACKTRACE=full \
 		RUST_LOG="actix_web=debug" \
 		JWT_KEY=77397A244326452948404D635166546A576E5A7234753778214125442A472D4A \
-		cargo run --bin server
+		cargo test $(T) -- --nocapture --test-threads=1
 
 
 seed_files := $(wildcard seeds/*)
