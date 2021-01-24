@@ -29,7 +29,7 @@ use errors::ErrorResponse;
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
     dotenv().ok();
-    env_logger::init();
+    env_logger::init_from_env(env_logger::Env::default().default_filter_or("debug"));
 
     let pool = db::new_pool();
 

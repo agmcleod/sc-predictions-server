@@ -97,11 +97,7 @@ mod tests {
         let srv = get_test_server();
 
         let client = Client::default();
-        let ws = client.ws(srv.url("/ws/"));
-
-        // let ws_res = ws.connect().await.unwrap();
-
-        // let (sink, stream) = ws_res.1.split();
+        let mut ws = client.ws(srv.url("/ws/")).connect().await.unwrap();
 
         let req = srv.post("/api/games/join");
         let mut res = req
@@ -117,6 +113,14 @@ mod tests {
         let user: User = res.json::<User>().await.unwrap();
 
         assert_eq!(user.user_name, "agmcleod");
+
+        let mut stream = ws.1.take(3);
+        let msg = stream.next().await;
+        println!("strm: {:?}", msg);
+        let msg = stream.next().await;
+        println!("strm: {:?}", msg);
+
+        drop(stream);
 
         srv.stop().await;
 

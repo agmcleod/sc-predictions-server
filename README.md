@@ -38,27 +38,27 @@ Can then run `dockr up` instead of the above. The rest of the readme uses this f
 
 ## Running Migrations
 
-(Optional) Install diesel-cli:
+Install diesel-cli:
 
 ```bash
 cargo install diesel_cli --no-default-features --features postgres
 ```
 
-Can then use it locally, or run the cli via docker:
+Can then use it locally:
 
 ```
 # create a migration file
-dockr exec server diesel migration generate create_posts --migration-dir=db/migrations
+make create_migration name=create_posts
 # apply all non applied migrations
-dockr exec server diesel migration run --migration-dir=db/migrations
+make migrate
 # redo the last migration
-dockr exec server diesel migration redo --migration-dir=db/migrations
+make redo_migrate
 ```
 
 ## Seeds
 
 ```
-dockr exec server cargo run --bin seeds
+make seeds
 ```
 
 ## Running tests

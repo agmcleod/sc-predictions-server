@@ -139,6 +139,8 @@ impl Handler<MessageToClient> for Server {
                     }
                 }
             }
+        } else {
+            warn!("Could not find session by game: {}", msg.game_id);
         }
     }
 }
