@@ -2,10 +2,11 @@ use std::collections::HashMap;
 
 use actix::prelude::{Actor, Context, Handler, Message as ActixMessage, Recipient};
 use serde::Serialize;
-use serde_json::{to_string, Value};
+use serde_json::{error::Result as SerdeResult, to_string, to_value, Value};
 
 use auth::{decode_jwt, PrivateClaim};
-use db::PgPool;
+use db::{get_conn, models::User, PgPool};
+use errors::Error;
 
 #[derive(ActixMessage)]
 #[rtype(result = "()")]
@@ -54,28 +55,49 @@ impl Server {
             sessions: HashMap::new(),
         }
     }
+
+    fn send_msg_to_game_sessions(&self, game_id: &i32, data: SerdeResult<String>) {
+        if let Some(session_ids) = self.game_to_sessions.get(game_id) {
+            for id in session_ids {
+                if let Some(session) = self.sessions.get(id) {
+                    if let Ok(ref data) = data {
+                        match session.addr.do_send(Message(data.clone())) {
+                            Err(err) => {
+                                error!("Error sending client message: {:?}", err);
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+            }
+        } else {
+            warn!("Could not find session by game: {}", *game_id);
+        }
+    }
 }
 
 impl Actor for Server {
     type Context = Context<Self>;
 }
 
-#[derive(ActixMessage)]
-#[rtype(result = "()")]
 pub struct Auth {
     pub id: String,
     pub token: String,
 }
 
+impl ActixMessage for Auth {
+    type Result = Result<(), Error>;
+}
+
 impl Handler<Auth> for Server {
-    type Result = ();
+    type Result = Result<(), Error>;
 
     fn handle(&mut self, msg: Auth, _: &mut Context<Self>) -> Self::Result {
         let private_claim = decode_jwt(&msg.token);
         if private_claim.is_ok() {
             if !self.sessions.contains_key(&msg.id) {
                 error!("Session not found: {}", msg.id);
-                return;
+                return Ok(());
             }
             self.sessions.get_mut(&msg.id).unwrap().token = Some(msg.token.clone());
             let private_claim = private_claim.unwrap();
@@ -89,7 +111,17 @@ impl Handler<Auth> for Server {
                 .get_mut(&private_claim.game_id)
                 .unwrap();
             sessions_for_game.push(msg.id.clone());
+
+            let connection = get_conn(&self.pool)?;
+
+            let users = User::find_all_by_game_id(&connection, private_claim.game_id)?;
+            if let Ok(value) = to_value(users) {
+                let msg = MessageToClient::new("/players", private_claim.game_id, value);
+                self.send_msg_to_game_sessions(&msg.game_id, to_string(&msg));
+            }
         }
+
+        Ok(())
     }
 }
 
@@ -126,21 +158,6 @@ impl Handler<MessageToClient> for Server {
     type Result = ();
 
     fn handle(&mut self, msg: MessageToClient, _: &mut Context<Self>) -> Self::Result {
-        if let Some(session_ids) = self.game_to_sessions.get(&msg.game_id) {
-            for id in session_ids {
-                if let Some(session) = self.sessions.get(id) {
-                    if let Ok(data) = to_string(&msg) {
-                        match session.addr.do_send(Message(data)) {
-                            Err(err) => {
-                                error!("Error sending client message: {:?}", err);
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-            }
-        } else {
-            warn!("Could not find session by game: {}", msg.game_id);
-        }
+        self.send_msg_to_game_sessions(&msg.game_id, to_string(&msg));
     }
 }

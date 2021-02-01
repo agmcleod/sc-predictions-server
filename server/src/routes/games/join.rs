@@ -4,7 +4,6 @@ use actix_web::{
     Result,
 };
 use serde::{Deserialize, Serialize};
-use serde_json::to_value;
 use validator::Validate;
 
 use db::{
@@ -15,7 +14,6 @@ use db::{
 use errors::Error;
 
 use crate::validate::validate;
-use crate::websocket::{MessageToClient, Server};
 
 #[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct JoinRequest {
@@ -25,36 +23,26 @@ pub struct JoinRequest {
     slug: String,
 }
 
-pub async fn join(
-    pool: Data<PgPool>,
-    websocket_srv: Data<Addr<Server>>,
-    params: Json<JoinRequest>,
-) -> Result<Json<User>, Error> {
+pub async fn join(pool: Data<PgPool>, params: Json<JoinRequest>) -> Result<Json<User>, Error> {
     validate(&params)?;
     let connection = get_conn(&pool).unwrap();
 
-    let (new_user, users, game_id) = block(move || {
+    let new_user = block(move || {
         let game = Game::find_by_slug(&connection, &params.slug)?;
         if User::find_by_game_id_and_name(&connection, game.id, &params.name).is_ok() {
             return Err(Error::UnprocessableEntity("Username is taken".to_string()));
         }
         let new_user = User::create(&connection, params.name.clone(), game.id)?;
-        let users = User::find_all_by_game_id(&connection, game.id)?;
-        Ok((new_user, users, game.id))
+        Ok(new_user)
     })
     .await?;
-
-    if let Ok(value) = to_value(users) {
-        let msg = MessageToClient::new("/players", game_id, value);
-        websocket_srv.do_send(msg);
-    }
 
     Ok(Json(new_user))
 }
 
 #[cfg(test)]
 mod tests {
-    use actix_web::client::Client;
+    // use actix_web::client::Client;
     use diesel::RunQueryDsl;
 
     use db::{
@@ -64,7 +52,7 @@ mod tests {
         schema::{games, users},
     };
     use errors::ErrorResponse;
-    use futures::StreamExt;
+    // use futures::StreamExt;
 
     use super::JoinRequest;
     use crate::tests::helpers::tests::{get_test_server, test_post};
@@ -96,8 +84,8 @@ mod tests {
 
         let srv = get_test_server();
 
-        let client = Client::default();
-        let mut ws = client.ws(srv.url("/ws/")).connect().await.unwrap();
+        // let client = Client::default();
+        // let mut ws = client.ws(srv.url("/ws/")).connect().await.unwrap();
 
         let req = srv.post("/api/games/join");
         let mut res = req
@@ -114,13 +102,13 @@ mod tests {
 
         assert_eq!(user.user_name, "agmcleod");
 
-        let mut stream = ws.1.take(3);
-        let msg = stream.next().await;
-        println!("strm: {:?}", msg);
-        let msg = stream.next().await;
-        println!("strm: {:?}", msg);
+        // let mut stream = ws.1.take(3);
+        // let msg = stream.next().await;
+        // println!("strm: {:?}", msg);
+        // let msg = stream.next().await;
+        // println!("strm: {:?}", msg);
 
-        drop(stream);
+        // drop(stream);
 
         srv.stop().await;
 
