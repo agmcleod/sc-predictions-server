@@ -1,10 +1,10 @@
 use std::collections::HashMap;
 
 use actix::prelude::{Actor, Context, Handler, Message as ActixMessage, Recipient};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{error::Result as SerdeResult, to_string, to_value, Value};
 
-use auth::{decode_jwt, PrivateClaim};
+use auth::decode_jwt;
 use db::{get_conn, models::User, PgPool};
 use errors::Error;
 
@@ -12,7 +12,7 @@ use errors::Error;
 #[rtype(result = "()")]
 pub struct Message(pub String);
 
-#[derive(ActixMessage, Serialize)]
+#[derive(ActixMessage, Deserialize, Serialize)]
 #[rtype(result = "()")]
 pub struct MessageToClient {
     pub path: String,
@@ -159,5 +159,151 @@ impl Handler<MessageToClient> for Server {
 
     fn handle(&mut self, msg: MessageToClient, _: &mut Context<Self>) -> Self::Result {
         self.send_msg_to_game_sessions(&msg.game_id, to_string(&msg));
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use actix_web::client::Client;
+    use actix_web_actors::ws;
+    use diesel::RunQueryDsl;
+    use futures::{SinkExt, StreamExt};
+    use serde_json;
+
+    use auth::{PrivateClaim, Role};
+    use db::{
+        get_conn,
+        models::{Game, NewUser, User, UserDetails},
+        new_pool,
+        schema::{games, users},
+    };
+
+    use crate::tests::helpers::tests::{get_auth_token, get_test_server, get_websocket_frame_data};
+
+    #[derive(Insertable)]
+    #[table_name = "games"]
+    struct NewGame {
+        slug: String,
+    }
+
+    #[actix_rt::test]
+    async fn test_ws_auth_broadcast_no_users() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let game: Game = diesel::insert_into(games::table)
+            .values(NewGame {
+                slug: "abc123".to_string(),
+            })
+            .get_result(&conn)
+            .unwrap();
+
+        let srv = get_test_server();
+
+        let client = Client::default();
+        let mut ws_conn = client.ws(srv.url("/ws/")).connect().await.unwrap();
+
+        // owner joins
+        let token = get_auth_token(PrivateClaim::new(
+            game.id,
+            "player one".to_string(),
+            game.id,
+            Role::Owner,
+        ));
+
+        ws_conn
+            .1
+            .send(ws::Message::Text(format!(
+                "/auth {{\"token\":\"{}\"}}",
+                token
+            )))
+            .await
+            .unwrap();
+
+        let mut stream = ws_conn.1.take(1);
+
+        let msg = stream.next().await;
+        let data = get_websocket_frame_data(msg.unwrap().unwrap());
+        if data.is_some() {
+            let msg = data.unwrap();
+            assert_eq!(msg.path, "/players");
+            assert_eq!(msg.game_id, game.id);
+            let players = msg.data.as_array().unwrap();
+            assert_eq!(players.len(), 0);
+        } else {
+            assert!(false, "Message was not a string");
+        }
+
+        drop(stream);
+
+        srv.stop().await;
+        diesel::delete(games::table).execute(&conn).unwrap();
+    }
+
+    #[actix_rt::test]
+    async fn test_ws_auth_broadcasts_users() {
+        let pool = new_pool();
+        let conn = get_conn(&pool).unwrap();
+
+        let game: Game = diesel::insert_into(games::table)
+            .values(NewGame {
+                slug: "abc123".to_string(),
+            })
+            .get_result(&conn)
+            .unwrap();
+
+        let srv = get_test_server();
+
+        let client = Client::default();
+        let mut ws_conn = client.ws(srv.url("/ws/")).connect().await.unwrap();
+
+        let user: User = diesel::insert_into(users::table)
+            .values(NewUser {
+                game_id: game.id,
+                user_name: "agmcleod".to_string(),
+            })
+            .get_result(&conn)
+            .unwrap();
+
+        // player joins
+        let token = get_auth_token(PrivateClaim::new(
+            user.id,
+            "player one".to_string(),
+            game.id,
+            Role::Player,
+        ));
+
+        ws_conn
+            .1
+            .send(ws::Message::Text(format!(
+                "/auth {{\"token\":\"{}\"}}",
+                token
+            )))
+            .await
+            .unwrap();
+
+        let mut stream = ws_conn.1.take(1);
+
+        let msg = stream.next().await;
+        let data = get_websocket_frame_data(msg.unwrap().unwrap());
+        if data.is_some() {
+            let msg = data.unwrap();
+            assert_eq!(msg.path, "/players");
+            assert_eq!(msg.game_id, game.id);
+            let players = msg.data.as_array().unwrap();
+            assert_eq!(players.len(), 1);
+            let player = players.get(0).unwrap().to_owned();
+            let player: UserDetails = serde_json::from_value(player).unwrap();
+            assert_eq!(player.user_name, "agmcleod");
+            assert_eq!(player.game_id, game.id);
+        } else {
+            assert!(false, "Message was not a string");
+        }
+
+        drop(stream);
+
+        srv.stop().await;
+        diesel::delete(users::table).execute(&conn).unwrap();
+        diesel::delete(games::table).execute(&conn).unwrap();
     }
 }

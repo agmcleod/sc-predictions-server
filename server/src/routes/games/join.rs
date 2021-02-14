@@ -1,4 +1,3 @@
-use actix::Addr;
 use actix_web::{
     web::{block, Data, Json},
     Result,
@@ -42,7 +41,6 @@ pub async fn join(pool: Data<PgPool>, params: Json<JoinRequest>) -> Result<Json<
 
 #[cfg(test)]
 mod tests {
-    // use actix_web::client::Client;
     use diesel::RunQueryDsl;
 
     use db::{
@@ -52,10 +50,9 @@ mod tests {
         schema::{games, users},
     };
     use errors::ErrorResponse;
-    // use futures::StreamExt;
 
     use super::JoinRequest;
-    use crate::tests::helpers::tests::{get_test_server, test_post};
+    use crate::tests::helpers::tests::test_post;
 
     #[derive(Insertable)]
     #[table_name = "games"]
@@ -82,35 +79,19 @@ mod tests {
             .get_result(&conn)
             .unwrap();
 
-        let srv = get_test_server();
-
-        // let client = Client::default();
-        // let mut ws = client.ws(srv.url("/ws/")).connect().await.unwrap();
-
-        let req = srv.post("/api/games/join");
-        let mut res = req
-            .send_json(&JoinRequest {
+        let res: (u16, User) = test_post(
+            "/api/games/join",
+            JoinRequest {
                 name: "agmcleod".to_string(),
                 slug: game.slug.unwrap(),
-            })
-            .await
-            .unwrap();
+            },
+            None,
+        )
+        .await;
 
-        assert_eq!(res.status().as_u16(), 200);
+        assert_eq!(res.0, 200);
 
-        let user: User = res.json::<User>().await.unwrap();
-
-        assert_eq!(user.user_name, "agmcleod");
-
-        // let mut stream = ws.1.take(3);
-        // let msg = stream.next().await;
-        // println!("strm: {:?}", msg);
-        // let msg = stream.next().await;
-        // println!("strm: {:?}", msg);
-
-        // drop(stream);
-
-        srv.stop().await;
+        assert_eq!(res.1.user_name, "agmcleod");
 
         diesel::delete(users::table).execute(&conn).unwrap();
         diesel::delete(games::table).execute(&conn).unwrap();

@@ -6,6 +6,7 @@ pub mod tests {
     use actix_http::Request;
     use actix_service::Service;
     use actix_web::{body::Body, dev::ServiceResponse, error::Error, test, App};
+    use actix_web_actors::ws;
     use serde::{de::DeserializeOwned, Deserialize, Serialize};
     use serde_json;
 
@@ -13,7 +14,7 @@ pub mod tests {
     use db;
 
     use crate::routes::routes;
-    use crate::websocket::Server;
+    use crate::websocket::{MessageToClient, Server};
 
     #[derive(Deserialize, Serialize, Debug)]
     struct CookieValue {
@@ -107,5 +108,19 @@ pub mod tests {
 
     pub fn get_auth_token(private_claim: PrivateClaim) -> String {
         create_jwt(private_claim).unwrap()
+    }
+
+    pub fn get_websocket_frame_data(frame: ws::Frame) -> Option<MessageToClient> {
+        match frame {
+            ws::Frame::Text(t) => {
+                let bytes = t.as_ref();
+                let data = String::from_utf8(bytes.to_vec()).unwrap();
+                let value: MessageToClient = serde_json::from_str(&data).unwrap();
+                return Some(value);
+            }
+            _ => {}
+        }
+
+        None
     }
 }

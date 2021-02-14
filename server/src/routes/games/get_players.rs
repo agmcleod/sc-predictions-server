@@ -155,13 +155,13 @@ mod tests {
             .get_result(&conn)
             .unwrap();
 
-        let cookie = get_auth_token(PrivateClaim::new(
+        let token = get_auth_token(PrivateClaim::new(
             1,
             "".to_string(),
             game.id + 1,
             Role::Player,
         ));
-        let res = test_get(&format!("/api/games/{}/players", game.id), Some(cookie)).await;
+        let res = test_get(&format!("/api/games/{}/players", game.id), Some(token)).await;
         assert_eq!(res.0, 403);
 
         let body: ErrorResponse = res.1;
