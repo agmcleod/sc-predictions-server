@@ -45,7 +45,7 @@ impl WebSocketSession {
     fn send_heartbeat(&self, ctx: &mut <Self as Actor>::Context) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
             if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
-                println!("Websocket Client heartbeat failed, disconnecting!");
+                info!("Websocket Client heartbeat failed, disconnecting!");
                 act.server_addr.do_send(Disconnect { id: act.id.clone() });
                 // stop actor
                 ctx.stop();
@@ -53,7 +53,6 @@ impl WebSocketSession {
                 // don't try to send a ping
                 return;
             }
-
             ctx.ping(b"");
         });
     }
@@ -125,8 +124,16 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WebSocketSession 
             }
             Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
             Ok(ws::Message::Close(reason)) => {
+                info!("closed ws session");
+                self.server_addr.do_send(Disconnect {
+                    id: self.id.clone(),
+                });
                 ctx.close(reason);
                 ctx.stop();
+            }
+            Err(err) => {
+                warn!("Error handling msg: {:?}", err);
+                ctx.stop()
             }
             _ => ctx.stop(),
         }

@@ -33,11 +33,17 @@ impl MessageToClient {
 struct Session {
     addr: Recipient<Message>,
     token: Option<String>,
+    // should only be one, but lets track multiple in case
+    game_ids: Vec<i32>,
 }
 
 impl Session {
     fn new(addr: Recipient<Message>) -> Self {
-        Session { addr, token: None }
+        Session {
+            addr,
+            token: None,
+            game_ids: Vec::new(),
+        }
     }
 }
 
@@ -99,7 +105,8 @@ impl Handler<Auth> for Server {
                 error!("Session not found: {}", msg.id);
                 return Ok(());
             }
-            self.sessions.get_mut(&msg.id).unwrap().token = Some(msg.token.clone());
+            let current_session = self.sessions.get_mut(&msg.id).unwrap();
+            current_session.token = Some(msg.token.clone());
             let private_claim = private_claim.unwrap();
             if !self.game_to_sessions.contains_key(&private_claim.game_id) {
                 self.game_to_sessions
@@ -110,7 +117,14 @@ impl Handler<Auth> for Server {
                 .game_to_sessions
                 .get_mut(&private_claim.game_id)
                 .unwrap();
+
+            // already authenticated
+            if sessions_for_game.contains(&msg.id) {
+                return Ok(());
+            }
             sessions_for_game.push(msg.id.clone());
+
+            current_session.game_ids.push(private_claim.game_id);
 
             let connection = get_conn(&self.pool)?;
 
