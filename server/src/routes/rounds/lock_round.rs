@@ -42,7 +42,11 @@ pub async fn lock_round(
 
 #[cfg(test)]
 mod tests {
+    use actix_web::client::Client;
+    use actix_web_actors::ws;
     use diesel::{self, ExpressionMethods, QueryDsl, RunQueryDsl};
+    use futures::{SinkExt, StreamExt};
+    use serde_json;
 
     use auth::{create_jwt, PrivateClaim, Role};
     use db::{
@@ -53,7 +57,8 @@ mod tests {
     };
     use errors::ErrorResponse;
 
-    use crate::tests::helpers::tests::test_post;
+    use crate::handlers::StatusResponse;
+    use crate::tests::helpers::tests::{get_test_server, get_websocket_frame_data, test_post};
 
     #[derive(Insertable)]
     #[table_name = "games"]
@@ -100,12 +105,56 @@ mod tests {
             .execute(&conn)
             .unwrap();
 
-        let claim = PrivateClaim::new(game.id, game.slug.unwrap(), game.id, Role::Owner);
+        let slug = game.slug.as_ref().unwrap().clone();
+        let claim = PrivateClaim::new(game.id, slug, game.id, Role::Owner);
         let token = create_jwt(claim).unwrap();
 
-        let res: (u16, ()) = test_post("/api/rounds/lock", (), Some(token)).await;
+        let srv = get_test_server();
 
-        assert_eq!(res.0, 200);
+        let client = Client::default();
+        let mut ws_conn = client.ws(srv.url("/ws/")).connect().await.unwrap();
+
+        // auth this user with the websocket server
+        ws_conn
+            .1
+            .send(ws::Message::Text(format!(
+                "/auth {{\"token\":\"{}\"}}",
+                token
+            )))
+            .await
+            .unwrap();
+
+        let res = srv
+            .post("/api/rounds/lock")
+            .set_header("Authorization", token)
+            .send()
+            .await
+            .unwrap();
+
+        assert_eq!(res.status().as_u16(), 200);
+
+        let mut stream = ws_conn.1.take(2);
+        stream.next().await;
+        let msg = stream.next().await;
+
+        let data = get_websocket_frame_data(msg.unwrap().unwrap());
+        if data.is_some() {
+            let msg = data.unwrap();
+            assert_eq!(msg.path, "/current-round");
+            assert_eq!(msg.game_id, game.id);
+            let round_status: StatusResponse = serde_json::from_value(msg.data).unwrap();
+            // both rounds are locked
+            assert_eq!(round_status.open_round, false);
+            assert_eq!(round_status.unfinished_round, true);
+            assert_eq!(round_status.slug, game.slug.unwrap());
+        } else {
+            assert!(false, "Message was not a string");
+        }
+
+        drop(stream);
+
+        srv.stop().await;
+
         let results: Vec<Round> = rounds::dsl::rounds
             .filter(rounds::dsl::game_id.eq(game.id))
             .get_results(&conn)
