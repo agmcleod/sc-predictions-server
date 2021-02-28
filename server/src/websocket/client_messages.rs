@@ -4,6 +4,8 @@ use diesel::pg::PgConnection;
 use diesel::r2d2::{ConnectionManager, PooledConnection};
 use serde_json::to_value;
 
+use auth::Role;
+
 use super::{MessageToClient, Server};
 use crate::handlers;
 
@@ -27,9 +29,11 @@ pub async fn send_game_status(
 pub async fn send_round_status(
     websocket_srv: &Data<Addr<Server>>,
     connection: PooledConnection<ConnectionManager<PgConnection>>,
+    role: Role,
+    user_id: i32,
     game_id: i32,
 ) {
-    let round_status = handlers::get_round_status(connection, game_id).await;
+    let round_status = handlers::get_round_status(connection, role, user_id, game_id).await;
     match round_status {
         Ok(round_status) => {
             if let Ok(value) = to_value(round_status) {

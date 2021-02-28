@@ -69,7 +69,8 @@ pub async fn score_round(
 
     client_messages::send_game_status(&websocket_srv, conn, claim.game_id).await;
     let conn = get_conn(&pool)?;
-    client_messages::send_round_status(&websocket_srv, conn, claim.game_id).await;
+    client_messages::send_round_status(&websocket_srv, conn, claim.role, claim.id, claim.game_id)
+        .await;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -258,6 +259,7 @@ mod tests {
             let round_status: RoundStatusRepsonse = serde_json::from_value(msg.data).unwrap();
             assert_eq!(round_status.locked, true);
             assert_eq!(round_status.finished, true);
+            assert_eq!(round_status.picks_chosen, false);
         } else {
             assert!(false, "Message was not a string");
         }

@@ -253,7 +253,7 @@ mod tests {
 
         assert_eq!(res.status().as_u16(), 200);
 
-        let mut stream = ws_conn.1.take(3);
+        let mut stream = ws_conn.1.take(2);
         // skip the first one, as it's a heartbeat
         stream.next().await;
         let msg = stream.next().await;
