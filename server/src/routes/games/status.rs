@@ -5,7 +5,7 @@ use auth::identity_matches_game_id;
 use db::{get_conn, PgPool};
 use errors;
 
-use crate::handlers::{get_round_status, StatusResponse};
+use crate::handlers::{get_game_status, StatusResponse};
 
 pub async fn status(
     id: Identity,
@@ -16,7 +16,7 @@ pub async fn status(
     identity_matches_game_id(id, game_id)?;
 
     let connection = get_conn(&pool)?;
-    let response = get_round_status(connection, game_id).await?;
+    let response = get_game_status(connection, game_id).await?;
 
     Ok(Json(response))
 }

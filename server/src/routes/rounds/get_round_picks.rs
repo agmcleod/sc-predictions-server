@@ -1,44 +1,24 @@
 use actix_identity::Identity;
-use actix_web::web::{block, Data, Json};
-use serde::{Deserialize, Serialize};
+use actix_web::web::{Data, Json};
 
 use auth::{get_claim_from_identity, Role};
-use db::{
-    get_conn,
-    models::{Round, UserAnswer, UserQuestion},
-    PgPool,
-};
+use db::{get_conn, PgPool};
 use errors::Error;
 
-#[derive(Deserialize, PartialEq, Serialize)]
-pub struct GetRoundPicksResponse {
-    data: Vec<UserAnswer>,
-    locked: bool,
-}
+use crate::handlers;
 
 pub async fn get_round_picks(
     id: Identity,
     pool: Data<PgPool>,
-) -> Result<Json<GetRoundPicksResponse>, Error> {
+) -> Result<Json<handlers::GetRoundPicksResponse>, Error> {
     let (claim, _) = get_claim_from_identity(id)?;
     if claim.role != Role::Owner {
         return Err(Error::Forbidden);
     }
 
-    let (user_questions, locked) = block(move || {
-        let conn = get_conn(&pool)?;
+    let round_picks_response = handlers::get_round_picks(get_conn(&pool)?, claim.game_id).await?;
 
-        let round = Round::get_active_round_by_game_id(&conn, claim.game_id)?;
-
-        let user_questions = UserQuestion::find_by_round(&conn, round.id)?;
-        Ok((user_questions, round.locked))
-    })
-    .await?;
-
-    Ok(Json(GetRoundPicksResponse {
-        data: user_questions,
-        locked,
-    }))
+    Ok(Json(round_picks_response))
 }
 
 #[cfg(test)]
@@ -59,9 +39,8 @@ mod tests {
     };
     use errors::ErrorResponse;
 
+    use crate::handlers::GetRoundPicksResponse;
     use crate::tests::helpers::tests::test_get;
-
-    use super::GetRoundPicksResponse;
 
     #[derive(Insertable)]
     #[table_name = "games"]

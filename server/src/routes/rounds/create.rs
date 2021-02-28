@@ -1,3 +1,4 @@
+use actix::Addr;
 use actix_identity::Identity;
 use actix_web::{
     web::{block, Data, Json},
@@ -6,7 +7,6 @@ use actix_web::{
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
-use crate::validate::validate;
 use auth::{get_claim_from_identity, Role};
 use db::{
     get_conn,
@@ -14,6 +14,9 @@ use db::{
     PgPool,
 };
 use errors::Error;
+
+use crate::validate::validate;
+use crate::websocket::{client_messages, Server};
 
 #[derive(Clone, Deserialize, Serialize, Validate)]
 pub struct CreateRoundRequest {
@@ -25,6 +28,7 @@ pub struct CreateRoundRequest {
 
 pub async fn create(
     id: Identity,
+    websocket_srv: Data<Addr<Server>>,
     pool: Data<PgPool>,
     params: Json<CreateRoundRequest>,
 ) -> Result<Json<Round>, Error> {
@@ -35,36 +39,47 @@ pub async fn create(
         return Err(Error::Forbidden);
     }
 
-    let conn = get_conn(&pool).unwrap();
+    let conn = get_conn(&pool)?;
 
-    let game = Game::find_by_id(&conn, claim.game_id).map_err(|err| match err {
-        // if the game didnt exist, return a forbidden error
-        Error::NotFound(_) => Error::Forbidden,
-        _ => err,
-    })?;
+    let game_id = claim.game_id;
+
+    let game = block(move || {
+        Game::find_by_id(&conn, game_id).map_err(|err| match err {
+            // if the game didnt exist, return a forbidden error
+            Error::NotFound(_) => Error::Forbidden,
+            _ => err,
+        })
+    })
+    .await?;
 
     if game.creator.is_none() || game.creator.unwrap() != token {
         return Err(Error::Forbidden);
     }
 
+    let conn = get_conn(&pool)?;
     let round = block(move || {
         Round::create(
             &conn,
-            claim.game_id,
+            game_id,
             params.player_one.clone(),
             params.player_two.clone(),
         )
     })
     .await?;
 
+    let conn = get_conn(&pool)?;
+    client_messages::send_game_status(&websocket_srv, conn, claim.game_id).await;
+
     Ok(Json(round))
 }
 
 #[cfg(test)]
 mod tests {
+    use actix_web::client::Client;
+    use actix_web_actors::ws;
     use diesel::{self, ExpressionMethods, QueryDsl, RunQueryDsl};
+    use futures::{SinkExt, StreamExt};
 
-    use crate::tests::helpers::tests::test_post;
     use auth::{create_jwt, PrivateClaim, Role};
     use db::{
         get_conn,
@@ -75,6 +90,8 @@ mod tests {
     use errors::ErrorResponse;
 
     use super::CreateRoundRequest;
+    use crate::handlers::StatusResponse;
+    use crate::tests::helpers::tests::{get_test_server, get_websocket_frame_data, test_post};
 
     #[derive(Insertable)]
     #[table_name = "games"]
@@ -93,7 +110,12 @@ mod tests {
             })
             .get_result(&conn)
             .unwrap();
-        let claim = PrivateClaim::new(game.id, game.slug.unwrap().clone(), game.id, Role::Owner);
+        let claim = PrivateClaim::new(
+            game.id,
+            game.slug.as_ref().unwrap().to_owned(),
+            game.id,
+            Role::Owner,
+        );
         let token = create_jwt(claim).unwrap();
 
         diesel::update(games::dsl::games.find(game.id))
@@ -101,19 +123,59 @@ mod tests {
             .execute(&conn)
             .unwrap();
 
-        let (status, round): (u16, Round) = test_post(
-            "/api/rounds",
-            CreateRoundRequest {
+        let srv = get_test_server();
+
+        let client = Client::default();
+        let mut ws_conn = client.ws(srv.url("/ws/")).connect().await.unwrap();
+
+        ws_conn
+            .1
+            .send(ws::Message::Text(format!(
+                "/auth {{\"token\":\"{}\"}}",
+                token
+            )))
+            .await
+            .unwrap();
+
+        let mut res = srv
+            .post("/api/rounds")
+            .set_header("Authorization", token)
+            .send_json(&CreateRoundRequest {
                 player_one: "Boxer".to_string(),
                 player_two: "Idra".to_string(),
-            },
-            Some(token),
-        )
-        .await;
+            })
+            .await
+            .unwrap();
 
-        assert_eq!(status, 200);
+        assert_eq!(res.status().as_u16(), 200);
+
+        let round: Round = res.json().await.unwrap();
+
         assert_eq!(round.player_one, "Boxer");
         assert_eq!(round.player_two, "Idra");
+
+        let mut stream = ws_conn.1.take(2);
+        // skip the first one, as it's a heartbeat
+        stream.next().await;
+        let msg = stream.next().await;
+
+        let data = get_websocket_frame_data(msg.unwrap().unwrap());
+        if data.is_some() {
+            let msg = data.unwrap();
+            assert_eq!(msg.path, "/game-status");
+            assert_eq!(msg.game_id, game.id);
+            let game_status: StatusResponse = serde_json::from_value(msg.data).unwrap();
+            // round unlocked & unfinished
+            assert_eq!(game_status.open_round, true);
+            assert_eq!(game_status.unfinished_round, true);
+            assert_eq!(game_status.slug, game.slug.unwrap());
+        } else {
+            assert!(false, "Message was not a string");
+        }
+
+        drop(stream);
+
+        srv.stop().await;
 
         diesel::delete(rounds::table).execute(&conn).unwrap();
         diesel::delete(games::table).execute(&conn).unwrap();

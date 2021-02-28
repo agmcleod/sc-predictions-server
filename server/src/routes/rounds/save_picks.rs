@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 
+use actix::Addr;
 use actix_identity::Identity;
 use actix_web::{
     web::{block, Data, HttpResponse, Json},
@@ -7,6 +8,7 @@ use actix_web::{
 };
 use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
+use serde_json::to_value;
 
 use auth::{get_claim_from_identity, PrivateClaim, Role};
 use db::{
@@ -15,6 +17,9 @@ use db::{
     PgPool,
 };
 use errors::Error;
+
+use crate::handlers::get_round_picks;
+use crate::websocket::{MessageToClient, Server};
 
 #[derive(Deserialize, Serialize)]
 pub struct Answer {
@@ -76,6 +81,7 @@ fn validate_selected_questions(
 
 pub async fn save_picks(
     id: Identity,
+    websocket_srv: Data<Addr<Server>>,
     pool: Data<PgPool>,
     params: Json<SavePicksParams>,
 ) -> Result<HttpResponse, Error> {
@@ -85,9 +91,9 @@ pub async fn save_picks(
         return Err(Error::Forbidden);
     }
 
-    block(move || {
-        let conn = get_conn(&pool)?;
+    let conn = get_conn(&pool)?;
 
+    let claim = block(move || {
         let round = Round::get_active_round_by_game_id(&conn, claim.game_id)?;
         validate_user_has_not_picked(&conn, &claim, round.id)?;
         validate_selected_questions(&conn, &claim, &params)?;
@@ -96,24 +102,39 @@ pub async fn save_picks(
             UserQuestion::create(&conn, claim.id, answer.id, round.id, answer.value.clone())?;
         }
 
-        Ok(())
+        Ok(claim)
     })
     .await?;
+
+    let conn = get_conn(&pool)?;
+    let round_picks = get_round_picks(conn, claim.game_id).await;
+    match round_picks {
+        Ok(round_picks) => {
+            if let Ok(value) = to_value(round_picks) {
+                let msg = MessageToClient::new("/picks", claim.game_id, value);
+                websocket_srv.do_send(msg);
+            }
+        }
+        Err(err) => error!("{:?}", err),
+    }
+
     Ok(HttpResponse::Ok().json(()))
 }
 
 #[cfg(test)]
 mod tests {
+    use actix_web::client::Client;
+    use actix_web_actors::ws;
     use diesel::{self, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
+    use futures::{SinkExt, StreamExt};
     use serde::Serialize;
 
-    use crate::tests::helpers::tests::test_post;
     use auth::{create_jwt, PrivateClaim, Role};
     use db::{
         get_conn,
         models::{
             Game, NewGameQuestion, NewRound, NewUser, NewUserQuestion, Question, Round, User,
-            UserQuestion,
+            UserAnswer, UserQuestion,
         },
         new_pool,
         schema::{
@@ -123,6 +144,8 @@ mod tests {
     use errors::ErrorResponse;
 
     use super::{Answer, SavePicksParams};
+    use crate::handlers::GetRoundPicksResponse;
+    use crate::tests::helpers::tests::{get_test_server, get_websocket_frame_data, test_post};
 
     #[derive(Serialize, Insertable)]
     #[table_name = "games"]
@@ -196,9 +219,24 @@ mod tests {
         let claim = PrivateClaim::new(user.id, user.user_name.clone(), game.id, Role::Player);
         let token = create_jwt(claim).unwrap();
 
-        let (status, ()) = test_post(
-            "/api/rounds/set-picks",
-            SavePicksParams {
+        let srv = get_test_server();
+
+        let client = Client::default();
+        let mut ws_conn = client.ws(srv.url("/ws/")).connect().await.unwrap();
+
+        ws_conn
+            .1
+            .send(ws::Message::Text(format!(
+                "/auth {{\"token\":\"{}\"}}",
+                token
+            )))
+            .await
+            .unwrap();
+
+        let res = srv
+            .post("/api/rounds/set-picks")
+            .set_header("Authorization", token)
+            .send_json(&SavePicksParams {
                 answers: vec![
                     Answer {
                         id: questions[0].id,
@@ -209,12 +247,34 @@ mod tests {
                         value: "two".to_string(),
                     },
                 ],
-            },
-            Some(token),
-        )
-        .await;
+            })
+            .await
+            .unwrap();
 
-        assert_eq!(status, 200);
+        assert_eq!(res.status().as_u16(), 200);
+
+        let mut stream = ws_conn.1.take(3);
+        // skip the first one, as it's a heartbeat
+        stream.next().await;
+        let msg = stream.next().await;
+
+        let data = get_websocket_frame_data(msg.unwrap().unwrap());
+        if data.is_some() {
+            let msg = data.unwrap();
+            assert_eq!(msg.path, "/picks");
+            assert_eq!(msg.game_id, game.id);
+            let round_picks: GetRoundPicksResponse = serde_json::from_value(msg.data).unwrap();
+            assert_eq!(round_picks.locked, false);
+            assert_eq!(round_picks.data[0].answer, "one");
+            assert_eq!(round_picks.data[1].answer, "two");
+            assert_eq!(round_picks.data.len(), 2);
+        } else {
+            assert!(false, "Message was not a string");
+        }
+
+        drop(stream);
+
+        srv.stop().await;
 
         let answers: Vec<UserQuestion> = user_questions::dsl::user_questions
             .filter(user_questions::dsl::user_id.eq(user.id))

@@ -4,7 +4,6 @@ use actix::Addr;
 use actix_identity::Identity;
 use actix_web::web::{block, Data, HttpResponse, Json};
 use serde::{Deserialize, Serialize};
-use serde_json::to_value;
 
 use auth::{get_claim_from_identity, Role};
 use db::{
@@ -14,8 +13,7 @@ use db::{
 };
 use errors::Error;
 
-use crate::handlers;
-use crate::websocket::{MessageToClient, Server};
+use crate::websocket::{client_messages, Server};
 
 #[derive(Deserialize, Serialize)]
 pub struct Answer {
@@ -40,9 +38,8 @@ pub async fn score_round(
         return Err(Error::Forbidden);
     }
 
+    let conn = get_conn(&pool)?;
     let (conn, claim) = block(move || {
-        let conn = get_conn(&pool)?;
-
         let round = Round::get_unfinished_round_by_game_id(&conn, claim.game_id)?;
         let user_questions = UserQuestion::find_by_round(&conn, round.id)?;
 
@@ -70,18 +67,19 @@ pub async fn score_round(
     })
     .await?;
 
-    let status_response = handlers::get_round_status(conn, claim.game_id).await?;
-    if let Ok(value) = to_value(status_response) {
-        let msg = MessageToClient::new("/current-round", claim.game_id, value);
-        websocket_srv.do_send(msg);
-    }
+    client_messages::send_game_status(&websocket_srv, conn, claim.game_id).await;
+    let conn = get_conn(&pool)?;
+    client_messages::send_round_status(&websocket_srv, conn, claim.game_id).await;
 
     Ok(HttpResponse::Ok().json(()))
 }
 
 #[cfg(test)]
 mod tests {
+    use actix_web::client::Client;
+    use actix_web_actors::ws;
     use diesel::{self, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
+    use futures::{SinkExt, StreamExt};
 
     use db::{
         get_conn,
@@ -93,7 +91,8 @@ mod tests {
     use auth::{create_jwt, PrivateClaim, Role};
     use errors::ErrorResponse;
 
-    use crate::tests::helpers::tests::test_post;
+    use crate::handlers::{RoundStatusRepsonse, StatusResponse};
+    use crate::tests::helpers::tests::{get_test_server, get_websocket_frame_data, test_post};
 
     use super::{Answer, Params};
 
@@ -195,9 +194,25 @@ mod tests {
 
         let claim = PrivateClaim::new(game.id, game.slug.unwrap().clone(), game.id, Role::Owner);
 
-        let (status, _): (u16, ()) = test_post(
-            "/api/rounds/score",
-            Params {
+        let srv = get_test_server();
+
+        let client = Client::default();
+        let mut ws_conn = client.ws(srv.url("/ws/")).connect().await.unwrap();
+
+        let token = create_jwt(claim).unwrap();
+        ws_conn
+            .1
+            .send(ws::Message::Text(format!(
+                "/auth {{\"token\":\"{}\"}}",
+                token
+            )))
+            .await
+            .unwrap();
+
+        let res = srv
+            .post("/api/rounds/score")
+            .set_header("Authorization", token)
+            .send_json(&Params {
                 answers: vec![
                     Answer {
                         answer: "one".to_string(),
@@ -208,12 +223,48 @@ mod tests {
                         question_id: questions[1].id,
                     },
                 ],
-            },
-            Some(create_jwt(claim).unwrap()),
-        )
-        .await;
+            })
+            .await
+            .unwrap();
 
-        assert_eq!(status, 200);
+        assert_eq!(res.status().as_u16(), 200);
+
+        let mut stream = ws_conn.1.take(3);
+        // skip the first one, as it's a heartbeat
+        stream.next().await;
+        let msg = stream.next().await;
+
+        let data = get_websocket_frame_data(msg.unwrap().unwrap());
+        if data.is_some() {
+            let msg = data.unwrap();
+            assert_eq!(msg.path, "/game-status");
+            assert_eq!(msg.game_id, game.id);
+            let game_status: StatusResponse = serde_json::from_value(msg.data).unwrap();
+            // round is locked and is now finished
+            assert_eq!(game_status.open_round, false);
+            assert_eq!(game_status.unfinished_round, false);
+            assert_eq!(game_status.slug, "abc123");
+        } else {
+            assert!(false, "Message was not a string");
+        }
+
+        let msg = stream.next().await;
+
+        let data = get_websocket_frame_data(msg.unwrap().unwrap());
+        if data.is_some() {
+            let msg = data.unwrap();
+            assert_eq!(msg.path, "/round-status");
+            assert_eq!(msg.game_id, game.id);
+            let round_status: RoundStatusRepsonse = serde_json::from_value(msg.data).unwrap();
+            assert_eq!(round_status.locked, true);
+            assert_eq!(round_status.finished, true);
+        } else {
+            assert!(false, "Message was not a string");
+        }
+
+        drop(stream);
+
+        srv.stop().await;
 
         let updated_user: User = users::dsl::users.find(user.id).first(&conn).unwrap();
         assert_eq!(updated_user.score, 5);

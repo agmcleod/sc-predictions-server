@@ -13,6 +13,7 @@ use uuid::Uuid;
 
 use errors::Error;
 
+pub mod client_messages;
 mod server;
 
 pub use self::server::*;

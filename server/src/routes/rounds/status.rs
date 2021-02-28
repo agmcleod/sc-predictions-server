@@ -1,52 +1,27 @@
 use actix_identity::Identity;
 use actix_web::{
-    web::{block, Data, Json},
+    web::{Data, Json},
     Result,
 };
-use serde::{Deserialize, Serialize};
 
 use auth::get_claim_from_identity;
-use db::{
-    get_conn,
-    models::{GameQuestion, QuestionDetails, Round},
-    PgPool,
-};
+use db::{get_conn, PgPool};
 use errors::Error;
 
-#[derive(Deserialize, PartialEq, Serialize)]
-pub struct StatusResponse {
-    player_names: Vec<String>,
-    questions: Vec<QuestionDetails>,
-    round_id: i32,
-    locked: bool,
-    finished: bool,
-}
+use crate::handlers::{get_round_status, RoundStatusRepsonse};
 
-pub async fn status(id: Identity, pool: Data<PgPool>) -> Result<Json<StatusResponse>, Error> {
+pub async fn status(id: Identity, pool: Data<PgPool>) -> Result<Json<RoundStatusRepsonse>, Error> {
     let (claim, _) = get_claim_from_identity(id)?;
-    let (round, questions) = block(move || {
-        let conn = get_conn(&pool)?;
-        let round = Round::get_latest_round_by_game_id(&conn, claim.game_id)?;
-        let questions = GameQuestion::get_questions_by_game_id(&conn, claim.game_id)?;
-
-        Ok((round, questions))
-    })
-    .await?;
-
-    Ok(Json(StatusResponse {
-        player_names: vec![round.player_one, round.player_two],
-        questions,
-        round_id: round.id,
-        locked: round.locked,
-        finished: round.finished,
-    }))
+    let conn = get_conn(&pool)?;
+    let status = get_round_status(conn, claim.game_id).await?;
+    Ok(Json(status))
 }
 
 #[cfg(test)]
 mod tests {
     use diesel::{self, RunQueryDsl};
 
-    use super::StatusResponse;
+    use super::RoundStatusRepsonse;
     use crate::tests::helpers::tests::test_get;
     use auth::{create_jwt, PrivateClaim, Role};
     use db::{
@@ -129,7 +104,7 @@ mod tests {
 
         let claim = PrivateClaim::new(game.id, game.slug.unwrap().clone(), game.id, Role::Owner);
         let token = create_jwt(claim).unwrap();
-        let res: (u16, StatusResponse) = test_get("/api/current-round", Some(token)).await;
+        let res: (u16, RoundStatusRepsonse) = test_get("/api/current-round", Some(token)).await;
 
         assert_eq!(res.0, 200);
         assert_eq!(res.1.player_names, vec!["one", "two"]);
@@ -192,7 +167,7 @@ mod tests {
 
         let claim = PrivateClaim::new(game.id, game.slug.unwrap().clone(), game.id, Role::Owner);
         let token = create_jwt(claim).unwrap();
-        let res: (u16, StatusResponse) = test_get("/api/current-round", Some(token)).await;
+        let res: (u16, RoundStatusRepsonse) = test_get("/api/current-round", Some(token)).await;
 
         assert_eq!(res.0, 200);
 

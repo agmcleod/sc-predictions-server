@@ -4,14 +4,12 @@ use actix_web::{
     web::{block, Data, HttpResponse},
     Result,
 };
-use serde_json::to_value;
 
 use auth::{get_claim_from_identity, Role};
 use db::{get_conn, models::Round, PgPool};
 use errors::Error;
 
-use crate::handlers;
-use crate::websocket::{MessageToClient, Server};
+use crate::websocket::{client_messages, Server};
 
 pub async fn lock_round(
     id: Identity,
@@ -23,19 +21,17 @@ pub async fn lock_round(
         return Err(Error::Forbidden);
     }
 
+    let conn = get_conn(&pool)?;
     let (conn, claim) = block(move || {
-        let conn = get_conn(&pool)?;
         let round = Round::get_active_round_by_game_id(&conn, claim.game_id)?;
         Round::lock(&conn, round.id)?;
         Ok((conn, claim))
     })
     .await?;
 
-    let status_response = handlers::get_round_status(conn, claim.game_id).await?;
-    if let Ok(value) = to_value(status_response) {
-        let msg = MessageToClient::new("/current-round", claim.game_id, value);
-        websocket_srv.do_send(msg);
-    }
+    client_messages::send_game_status(&websocket_srv, conn, claim.game_id).await;
+    let conn = get_conn(&pool)?;
+    client_messages::send_round_status(&websocket_srv, conn, claim.game_id).await;
 
     Ok(HttpResponse::Ok().json(()))
 }
@@ -57,7 +53,7 @@ mod tests {
     };
     use errors::ErrorResponse;
 
-    use crate::handlers::StatusResponse;
+    use crate::handlers::{RoundStatusRepsonse, StatusResponse};
     use crate::tests::helpers::tests::{get_test_server, get_websocket_frame_data, test_post};
 
     #[derive(Insertable)]
@@ -133,20 +129,34 @@ mod tests {
 
         assert_eq!(res.status().as_u16(), 200);
 
-        let mut stream = ws_conn.1.take(2);
+        let mut stream = ws_conn.1.take(3);
+        // skip the first one, as it's a heartbeat
         stream.next().await;
         let msg = stream.next().await;
 
         let data = get_websocket_frame_data(msg.unwrap().unwrap());
         if data.is_some() {
             let msg = data.unwrap();
-            assert_eq!(msg.path, "/current-round");
+            assert_eq!(msg.path, "/game-status");
             assert_eq!(msg.game_id, game.id);
-            let round_status: StatusResponse = serde_json::from_value(msg.data).unwrap();
+            let game_status: StatusResponse = serde_json::from_value(msg.data).unwrap();
             // both rounds are locked
-            assert_eq!(round_status.open_round, false);
-            assert_eq!(round_status.unfinished_round, true);
-            assert_eq!(round_status.slug, game.slug.unwrap());
+            assert_eq!(game_status.open_round, false);
+            assert_eq!(game_status.unfinished_round, true);
+            assert_eq!(game_status.slug, game.slug.unwrap());
+        } else {
+            assert!(false, "Message was not a string");
+        }
+
+        let msg = stream.next().await;
+
+        let data = get_websocket_frame_data(msg.unwrap().unwrap());
+        if data.is_some() {
+            let msg = data.unwrap();
+            assert_eq!(msg.path, "/round-status");
+            assert_eq!(msg.game_id, game.id);
+            let round_status: RoundStatusRepsonse = serde_json::from_value(msg.data).unwrap();
+            assert_eq!(round_status.locked, true);
         } else {
             assert!(false, "Message was not a string");
         }
