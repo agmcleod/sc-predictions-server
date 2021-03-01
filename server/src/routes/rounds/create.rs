@@ -70,6 +70,10 @@ pub async fn create(
     let conn = get_conn(&pool)?;
     client_messages::send_game_status(&websocket_srv, conn, claim.game_id).await;
 
+    let conn = get_conn(&pool)?;
+    client_messages::send_round_status(&websocket_srv, conn, claim.role, claim.id, claim.game_id)
+        .await;
+
     Ok(Json(round))
 }
 
