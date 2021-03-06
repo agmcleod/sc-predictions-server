@@ -17,4 +17,6 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --verbose --release
+      run: cargo build --bin server --verbose --release
+    - name: copy build
+      run: scp target/release/server ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ secrets.TARGET_FOLDER }}/server-new
