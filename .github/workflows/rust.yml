@@ -14,6 +14,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Cache cargo dependencies
+      uses: Swatinem/rust-cache@v1
     - name: Build
       run: cargo build --bin server --verbose --release
     - name: set deploy key
@@ -23,5 +25,9 @@ jobs:
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${DEPLOY_KEY}"
     - name: copy build
-      run: scp target/release/server ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ secrets.TARGET_FOLDER }}/server-new
+      env:
+        USERNAME: ${{ secrets.USERNAME }}
+        HOST: ${{ secrets.HOST }}
+        TARGET_FOLDER: ${{ secrets.TARGET_FOLDER }}
+      run: scp target/release/server $USERNAME@$HOST:$TARGET_FOLDER/server-new
         
