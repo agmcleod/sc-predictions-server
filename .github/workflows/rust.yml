@@ -18,5 +18,12 @@ jobs:
     - uses: actions/checkout@v2
     - name: Build
       run: cargo build --bin server --verbose --release
+    - name: set deploy key
+      env:
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      run: |
+        eval "$(ssh-agent -s)"
+        ssh-add - <<< "${DEPLOY_KEY}"
     - name: copy build
       run: scp target/release/server ${{ secrets.USERNAME }}@${{ secrets.HOST }}:${{ secrets.TARGET_FOLDER }}/server-new
+        
