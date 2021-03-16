@@ -22,6 +22,7 @@ jobs:
       env:
         DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
       run: |
+        echo "Debug: ${DEPLOY_KEY:0:3}"
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${DEPLOY_KEY}"
     - name: copy build
