@@ -22,7 +22,6 @@ jobs:
       env:
         DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
       run: |
-        echo "Debug: ${DEPLOY_KEY:0:3}"
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${DEPLOY_KEY}"
     - name: copy build
@@ -31,4 +30,4 @@ jobs:
         HOST: ${{ secrets.HOST }}
         TARGET_FOLDER: ${{ secrets.TARGET_FOLDER }}
       run: scp target/release/server $USERNAME@$HOST:$TARGET_FOLDER/server-new
-        
+
