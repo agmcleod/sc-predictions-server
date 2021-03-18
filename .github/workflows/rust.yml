@@ -23,6 +23,7 @@ jobs:
         DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
         SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
       run: |
+        mkdir -p ~/.ssh/
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${DEPLOY_KEY}"
         echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
