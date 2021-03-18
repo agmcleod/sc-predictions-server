@@ -21,9 +21,11 @@ jobs:
     - name: set deploy key
       env:
         DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+        SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
       run: |
         eval "$(ssh-agent -s)"
         ssh-add - <<< "${DEPLOY_KEY}"
+        echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - name: copy build
       env:
         USERNAME: ${{ secrets.USERNAME }}
