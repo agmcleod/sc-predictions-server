@@ -18,19 +18,20 @@ jobs:
       uses: Swatinem/rust-cache@v1
     - name: Build
       run: cargo build --bin server --verbose --release
-    - name: set deploy key
+    - name: set known hosts
       env:
-        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
         SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
       run: |
         mkdir -p ~/.ssh/
-        eval "$(ssh-agent -s)"
-        ssh-add - <<< "${DEPLOY_KEY}"
         echo "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
     - name: copy build
       env:
+        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
         USERNAME: ${{ secrets.USERNAME }}
         HOST: ${{ secrets.HOST }}
         TARGET_FOLDER: ${{ secrets.TARGET_FOLDER }}
-      run: scp target/release/server $USERNAME@$HOST:$TARGET_FOLDER/server-new
+      run: |
+        eval "$(ssh-agent -s)"
+        ssh-add - <<< "${DEPLOY_KEY}"
+        scp target/release/server $USERNAME@$HOST:$TARGET_FOLDER/server-new
 
