@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 use actix::{
     fut,
     prelude::{Actor, Addr, StreamHandler},
-    ActorContext, ActorFuture, AsyncContext, ContextFutureSpawner, Handler, WrapFuture,
+    ActorContext, ActorFutureExt, AsyncContext, ContextFutureSpawner, Handler, WrapFuture,
 };
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web_actors::ws;
@@ -29,7 +29,6 @@ struct AuthReq {
 pub struct WebSocketSession {
     id: String,
     hb: Instant,
-    token: Option<String>,
     server_addr: Addr<Server>,
 }
 
@@ -38,7 +37,6 @@ impl WebSocketSession {
         Self {
             id: Uuid::new_v4().to_string(),
             hb: Instant::now(),
-            token: None,
             server_addr,
         }
     }

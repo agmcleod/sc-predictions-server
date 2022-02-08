@@ -35,7 +35,8 @@ pub async fn create(
     pool: Data<PgPool>,
     params: Json<CreateGameRequest>,
 ) -> Result<Json<Game>, Error> {
-    let game = block(move || create_db_records(pool, params)).await?;
+    let res: Result<Game, Error> = block(move || create_db_records(pool, params)).await?;
+    let game = res?;
 
     Ok(Json(game))
 }

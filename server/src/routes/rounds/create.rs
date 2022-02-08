@@ -43,7 +43,7 @@ pub async fn create(
 
     let game_id = claim.game_id;
 
-    let game = block(move || {
+    let res = block(move || {
         Game::find_by_id(&conn, game_id).map_err(|err| match err {
             // if the game didnt exist, return a forbidden error
             Error::NotFound(_) => Error::Forbidden,
@@ -52,12 +52,14 @@ pub async fn create(
     })
     .await?;
 
+    let game = res?;
+
     if game.creator.is_none() || game.creator.unwrap() != token {
         return Err(Error::Forbidden);
     }
 
     let conn = get_conn(&pool)?;
-    let round = block(move || {
+    let res = block(move || {
         Round::create(
             &conn,
             game_id,
@@ -66,6 +68,8 @@ pub async fn create(
         )
     })
     .await?;
+
+    let round = res?;
 
     let conn = get_conn(&pool)?;
     client_messages::send_game_status(&websocket_srv, conn, claim.game_id).await;
@@ -79,8 +83,8 @@ pub async fn create(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::client::Client;
     use actix_web_actors::ws;
+    use awc::Client;
     use diesel::{self, ExpressionMethods, QueryDsl, RunQueryDsl};
     use futures::{SinkExt, StreamExt};
 
@@ -134,16 +138,15 @@ mod tests {
 
         ws_conn
             .1
-            .send(ws::Message::Text(format!(
-                "/auth {{\"token\":\"{}\"}}",
-                token
-            )))
+            .send(ws::Message::Text(
+                format!("/auth {{\"token\":\"{}\"}}", token).into(),
+            ))
             .await
             .unwrap();
 
         let mut res = srv
             .post("/api/rounds")
-            .set_header("Authorization", token)
+            .append_header(("Authorization", token))
             .send_json(&CreateRoundRequest {
                 player_one: "Boxer".to_string(),
                 player_two: "Idra".to_string(),

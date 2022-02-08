@@ -26,7 +26,7 @@ pub async fn join(pool: Data<PgPool>, params: Json<JoinRequest>) -> Result<Json<
     validate(&params)?;
     let connection = get_conn(&pool).unwrap();
 
-    let new_user = block(move || {
+    let res = block(move || {
         let game = Game::find_by_slug(&connection, &params.slug)?;
         if User::find_by_game_id_and_name(&connection, game.id, &params.name).is_ok() {
             return Err(Error::UnprocessableEntity("Username is taken".to_string()));
@@ -35,6 +35,8 @@ pub async fn join(pool: Data<PgPool>, params: Json<JoinRequest>) -> Result<Json<
         Ok(new_user)
     })
     .await?;
+
+    let new_user = res?;
 
     Ok(Json(new_user))
 }

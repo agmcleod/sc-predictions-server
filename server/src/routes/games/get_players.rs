@@ -18,7 +18,8 @@ pub async fn get_players(
     identity_matches_game_id(id, game_id)?;
 
     let connection = get_conn(&pool)?;
-    let users = block(move || User::find_all_by_game_id(&connection, game_id)).await?;
+    let res = block(move || User::find_all_by_game_id(&connection, game_id)).await?;
+    let users = res?;
 
     Ok(Json(users))
 }

@@ -10,11 +10,12 @@ use diesel::r2d2::{ConnectionManager, Pool, PooledConnection};
 use r2d2::Error;
 
 pub type PgPool = Pool<ConnectionManager<PgConnection>>;
+pub type Connection = PooledConnection<ConnectionManager<PgConnection>>;
 pub mod models;
 pub mod schema;
 mod utils;
 
-pub fn get_conn(pool: &PgPool) -> Result<PooledConnection<ConnectionManager<PgConnection>>, Error> {
+pub fn get_conn(pool: &PgPool) -> Result<Connection, Error> {
     pool.get().map_err(|err| {
         error!("Failed to get connection - {}", err.to_string());
         err.into()

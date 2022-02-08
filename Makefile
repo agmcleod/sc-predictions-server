@@ -3,7 +3,6 @@ SHELL := /bin/bash
 db_url := postgres://postgres:abc123@localhost:5434/sc_predictions
 
 test_prepare:
-	# docker-compose -f docker-compose.test.yml exec server_test diesel migration run --migration-dir=db/migrations
 	DATABASE_URL=postgres://root@localhost:5433/sc_predictions_test diesel migration run --migration-dir=db/migrations
 
 test:

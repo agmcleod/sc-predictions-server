@@ -24,7 +24,6 @@ mod websocket;
 
 use crate::routes::routes;
 use db;
-use errors::ErrorResponse;
 
 #[actix_rt::main]
 async fn main() -> std::io::Result<()> {
@@ -52,13 +51,10 @@ async fn main() -> std::io::Result<()> {
             .wrap(Logger::default())
             .wrap(Logger::new("%a %{User-Agent}i"))
             .wrap(auth::get_identity_service())
-            .data(pool.clone())
-            .data(server.clone())
+            .app_data(web::Data::new(pool.clone()))
+            .app_data(web::Data::new(server.clone()))
             .configure(routes)
-            .default_service(
-                web::route()
-                    .to(|| HttpResponse::NotFound().json::<ErrorResponse>("Not Found".into())),
-            )
+            .default_service(web::to(|| HttpResponse::NotFound()))
     })
     .bind("0.0.0.0:8080")?
     .run()

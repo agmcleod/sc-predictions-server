@@ -5,15 +5,17 @@ authors = ["Aaron McLeod <aaron.g.mcleod@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-actix = "0.10.0"
-actix-cors = "0.5"
-actix-http = "2.1"
-actix-identity = "0.3"
-actix-service = "1.0.6"
-actix-web = "3.2"
-actix-web-actors = "3.0"
-actix-rt = "1.1"
+actix = "0.12.0"
+actix-cors = "0.6.0-beta.8"
+actix-http = "3.0.0-rc.1"
+actix-identity = "0.4.0-beta.8"
+actix-service = "2.0.2"
+actix-web = "4.0.0-rc.2"
+actix-web-actors = "4.0.0-beta.11"
+actix-rt = "2.6"
+actix-test = "0.1.0-beta.12"
 auth = { path = "../auth" }
+awc = "3.0.0-beta.20"
 chrono = { version = "0.4.6", features = ["serde"] }
 derive_more = "0.99.9"
 db = { path = "../db" }

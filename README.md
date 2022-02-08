@@ -12,7 +12,13 @@ I don't know if this is something I plan to finish. I'm not sure I want to worry
 
 ## Setup
 
-Install docker.
+Install docker. You will also need postgres development library on your host machine, since this setup just creates a postgres database in docker. I did initially run the rust application in a docker container, but compilation took a minute or longer. If you're using linux you could setup the rust app to run in docker as well, as the performance won't be a problem there.
+
+On mac I have the postgres app i use sometimes for local development, so i added the directory path to the headers to my `.bashrc` file.
+
+```
+PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/lib
+```
 
 Start up the app, will take time to compile:
 

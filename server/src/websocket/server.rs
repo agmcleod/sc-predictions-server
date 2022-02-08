@@ -178,8 +178,8 @@ impl Handler<MessageToClient> for Server {
 
 #[cfg(test)]
 mod tests {
-    use actix_web::client::Client;
     use actix_web_actors::ws;
+    use awc::Client;
     use diesel::RunQueryDsl;
     use futures::{SinkExt, StreamExt};
     use serde_json;
@@ -227,10 +227,9 @@ mod tests {
 
         ws_conn
             .1
-            .send(ws::Message::Text(format!(
-                "/auth {{\"token\":\"{}\"}}",
-                token
-            )))
+            .send(ws::Message::Text(
+                format!("/auth {{\"token\":\"{}\"}}", token).into(),
+            ))
             .await
             .unwrap();
 
@@ -289,10 +288,9 @@ mod tests {
 
         ws_conn
             .1
-            .send(ws::Message::Text(format!(
-                "/auth {{\"token\":\"{}\"}}",
-                token
-            )))
+            .send(ws::Message::Text(
+                format!("/auth {{\"token\":\"{}\"}}", token).into(),
+            ))
             .await
             .unwrap();
 

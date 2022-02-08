@@ -9,7 +9,8 @@ use errors::Error;
 pub async fn get_all(pool: Data<PgPool>) -> Result<Json<Vec<Question>>, Error> {
     let connection = get_conn(&pool).unwrap();
 
-    let questions = block(move || Question::get_all(&connection)).await?;
+    let res = block(move || Question::get_all(&connection)).await?;
+    let questions = res?;
 
     Ok(Json(questions))
 }
