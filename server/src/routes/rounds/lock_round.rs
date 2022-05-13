@@ -1,8 +1,8 @@
 use actix::Addr;
 use actix_identity::Identity;
 use actix_web::{
-    web::{block, Data, HttpResponse},
-    Result,
+    web::{block, Data},
+    HttpResponse, Result,
 };
 
 use auth::{get_claim_from_identity, PrivateClaim, Role};

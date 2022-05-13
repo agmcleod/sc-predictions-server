@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use actix::Addr;
 use actix_identity::Identity;
-use actix_web::web::{block, Data, HttpResponse, Json};
+use actix_web::{
+    web::{block, Data, Json},
+    HttpResponse,
+};
 use serde::{Deserialize, Serialize};
 
 use auth::{get_claim_from_identity, PrivateClaim, Role};

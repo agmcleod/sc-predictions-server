@@ -67,7 +67,7 @@ impl Server {
             for id in session_ids {
                 if let Some(session) = self.sessions.get(id) {
                     if let Ok(ref data) = data {
-                        match session.addr.do_send(Message(data.clone())) {
+                        match session.addr.try_send(Message(data.clone())) {
                             Err(err) => {
                                 error!("Error sending client message: {:?}", err);
                             }

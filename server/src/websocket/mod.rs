@@ -1,9 +1,8 @@
 use std::time::{Duration, Instant};
 
 use actix::{
-    fut,
-    prelude::{Actor, Addr, StreamHandler},
-    ActorContext, ActorFutureExt, AsyncContext, ContextFutureSpawner, Handler, WrapFuture,
+    fut, Actor, ActorContext, ActorFutureExt, Addr, AsyncContext, Context, ContextFutureSpawner,
+    Handler, StreamHandler, WrapFuture,
 };
 use actix_web::{web, HttpRequest, HttpResponse};
 use actix_web_actors::ws;

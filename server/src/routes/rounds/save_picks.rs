@@ -3,8 +3,8 @@ use std::collections::HashSet;
 use actix::Addr;
 use actix_identity::Identity;
 use actix_web::{
-    web::{block, Data, HttpResponse, Json},
-    Result,
+    web::{block, Data, Json},
+    HttpResponse, Result,
 };
 use diesel::PgConnection;
 use serde::{Deserialize, Serialize};
