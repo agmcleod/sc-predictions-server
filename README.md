@@ -20,7 +20,7 @@ On mac I have the postgres app i use sometimes for local development, so i added
 PATH=$PATH:/Applications/Postgres.app/Contents/Versions/latest/lib
 ```
 
-Start up the app, will take time to compile:
+Start up the database:
 
 ```
 docker-compose up
@@ -65,6 +65,14 @@ make redo_migrate
 
 ```
 make seeds
+```
+
+## Run the server
+
+After the database is ready, can start the server:
+
+```
+make run_server
 ```
 
 ## Running tests
