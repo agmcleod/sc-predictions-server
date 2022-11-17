@@ -1,4 +1,4 @@
-version: "3"
+version: '3'
 
 services:
   # server:
@@ -17,12 +17,12 @@ services:
   #   links:
   #     - database
   database:
-    image: "postgres:10.5"
+    image: 'postgres:10.5'
     ports:
-      - "5434:5432"
+      - '5432:5432'
     environment:
       POSTGRES_DB: sc_predictions
-      POSTGRES_PASSWORD: abc123
+      POSTGRES_USER: dbuser
     volumes:
       - ./seeds:/seeds
     networks:
@@ -34,4 +34,4 @@ networks:
     ipam:
       driver: default
       config:
-        - subnet: "10.16.101.0/24"
+        - subnet: '10.16.101.0/24'
