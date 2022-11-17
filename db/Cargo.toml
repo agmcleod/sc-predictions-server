@@ -9,14 +9,14 @@ edition = "2018"
 [dependencies]
 auth = { path = "../auth" }
 chrono = { version = "0.4.6", features = ["serde"] }
-diesel = { version = "1.4.4", features = ["postgres", "r2d2", "uuid", "chrono"] }
+diesel = { version = "1.4.8", features = ["postgres", "r2d2", "uuid", "chrono"] }
 errors = { path = "../errors" }
 env_logger = "0.5.13"
 log = "0.4.0"
 radix = "0.4.1"
 rand = "0.6.1"
-r2d2 = "0.8.2"
-r2d2_postgres = "0.14.0"
+r2d2 = "0.8.9"
+r2d2_postgres = "0.18.1"
 serde = "1.0.80"
 serde_derive = "1.0.115"
 serde_json = "1.0.13"

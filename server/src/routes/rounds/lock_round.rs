@@ -1,12 +1,12 @@
 use actix::Addr;
 use actix_identity::Identity;
 use actix_web::{
-    web::{block, Data, HttpResponse},
-    Result,
+    web::{block, Data},
+    HttpResponse, Result,
 };
 
-use auth::{get_claim_from_identity, Role};
-use db::{get_conn, models::Round, PgPool};
+use auth::{get_claim_from_identity, PrivateClaim, Role};
+use db::{get_conn, models::Round, Connection, PgPool};
 use errors::Error;
 
 use crate::websocket::{client_messages, Server};
@@ -22,12 +22,14 @@ pub async fn lock_round(
     }
 
     let conn = get_conn(&pool)?;
-    let (conn, claim) = block(move || {
+    let res: Result<(Connection, PrivateClaim), Error> = block(move || {
         let round = Round::get_active_round_by_game_id(&conn, claim.game_id)?;
         Round::lock(&conn, round.id)?;
         Ok((conn, claim))
     })
     .await?;
+
+    let (conn, claim) = res?;
 
     client_messages::send_game_status(&websocket_srv, conn, claim.game_id).await;
     let conn = get_conn(&pool)?;
@@ -39,8 +41,8 @@ pub async fn lock_round(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::client::Client;
     use actix_web_actors::ws;
+    use awc::Client;
     use diesel::{self, ExpressionMethods, QueryDsl, RunQueryDsl};
     use futures::{SinkExt, StreamExt};
     use serde_json;
@@ -114,16 +116,15 @@ mod tests {
         // auth this user with the websocket server
         ws_conn
             .1
-            .send(ws::Message::Text(format!(
-                "/auth {{\"token\":\"{}\"}}",
-                token
-            )))
+            .send(ws::Message::Text(
+                format!("/auth {{\"token\":\"{}\"}}", token).into(),
+            ))
             .await
             .unwrap();
 
         let res = srv
             .post("/api/rounds/lock")
-            .set_header("Authorization", token)
+            .append_header(("Authorization", token))
             .send()
             .await
             .unwrap();

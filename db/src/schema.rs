@@ -1,4 +1,6 @@
-table! {
+// @generated automatically by Diesel CLI.
+
+diesel::table! {
     game_questions (id) {
         id -> Int4,
         game_id -> Int4,
@@ -8,7 +10,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     games (id) {
         id -> Int4,
         slug -> Nullable<Varchar>,
@@ -18,7 +20,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     questions (id) {
         id -> Int4,
         body -> Text,
@@ -27,7 +29,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     rounds (id) {
         id -> Int4,
         player_one -> Varchar,
@@ -40,7 +42,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     user_questions (id) {
         id -> Int4,
         user_id -> Int4,
@@ -52,7 +54,7 @@ table! {
     }
 }
 
-table! {
+diesel::table! {
     users (id) {
         id -> Int4,
         user_name -> Varchar,
@@ -64,15 +66,15 @@ table! {
     }
 }
 
-joinable!(game_questions -> games (game_id));
-joinable!(game_questions -> questions (question_id));
-joinable!(rounds -> games (game_id));
-joinable!(user_questions -> questions (question_id));
-joinable!(user_questions -> rounds (round_id));
-joinable!(user_questions -> users (user_id));
-joinable!(users -> games (game_id));
+diesel::joinable!(game_questions -> games (game_id));
+diesel::joinable!(game_questions -> questions (question_id));
+diesel::joinable!(rounds -> games (game_id));
+diesel::joinable!(user_questions -> questions (question_id));
+diesel::joinable!(user_questions -> rounds (round_id));
+diesel::joinable!(user_questions -> users (user_id));
+diesel::joinable!(users -> games (game_id));
 
-allow_tables_to_appear_in_same_query!(
+diesel::allow_tables_to_appear_in_same_query!(
     game_questions,
     games,
     questions,

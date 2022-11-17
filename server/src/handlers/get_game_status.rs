@@ -18,12 +18,14 @@ pub async fn get_game_status(
     connection: PooledConnection<ConnectionManager<PgConnection>>,
     game_id: i32,
 ) -> Result<StatusResponse, Error> {
-    let (game, rounds) = block(move || {
+    let data: Result<(Game, Vec<Round>), Error> = block(move || {
         let game = Game::find_by_id(&connection, game_id)?;
         let rounds = Round::belonging_to(&game).load::<Round>(&connection)?;
         Ok((game, rounds))
     })
     .await?;
+
+    let (game, rounds) = data?;
 
     Ok(StatusResponse {
         slug: game.slug.unwrap_or_else(|| "".to_string()),

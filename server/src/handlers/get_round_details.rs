@@ -23,7 +23,7 @@ pub async fn get_round_status(
     user_id: i32,
     game_id: i32,
 ) -> Result<RoundStatusRepsonse, Error> {
-    let (round, questions, user_questions) = block(move || {
+    let data: Result<(Round, Vec<QuestionDetails>, Vec<UserQuestion>), Error> = block(move || {
         let round = Round::get_latest_round_by_game_id(&connection, game_id)?;
         let questions = GameQuestion::get_questions_by_game_id(&connection, game_id)?;
 
@@ -36,6 +36,8 @@ pub async fn get_round_status(
         Ok((round, questions, user_questions))
     })
     .await?;
+
+    let (round, questions, user_questions) = data?;
 
     Ok(RoundStatusRepsonse {
         player_names: vec![round.player_one, round.player_two],

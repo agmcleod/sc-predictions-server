@@ -2,14 +2,17 @@ use std::collections::HashMap;
 
 use actix::Addr;
 use actix_identity::Identity;
-use actix_web::web::{block, Data, HttpResponse, Json};
+use actix_web::{
+    web::{block, Data, Json},
+    HttpResponse,
+};
 use serde::{Deserialize, Serialize};
 
-use auth::{get_claim_from_identity, Role};
+use auth::{get_claim_from_identity, PrivateClaim, Role};
 use db::{
     get_conn,
     models::{Round, User, UserQuestion},
-    PgPool,
+    Connection, PgPool,
 };
 use errors::Error;
 
@@ -39,7 +42,7 @@ pub async fn score_round(
     }
 
     let conn = get_conn(&pool)?;
-    let (conn, claim) = block(move || {
+    let res: Result<(Connection, PrivateClaim), Error> = block(move || {
         let round = Round::get_unfinished_round_by_game_id(&conn, claim.game_id)?;
         let user_questions = UserQuestion::find_by_round(&conn, round.id)?;
 
@@ -67,6 +70,8 @@ pub async fn score_round(
     })
     .await?;
 
+    let (conn, claim) = res?;
+
     client_messages::send_game_status(&websocket_srv, conn, claim.game_id).await;
     let conn = get_conn(&pool)?;
     client_messages::send_round_status(&websocket_srv, conn, claim.role, claim.id, claim.game_id)
@@ -77,8 +82,8 @@ pub async fn score_round(
 
 #[cfg(test)]
 mod tests {
-    use actix_web::client::Client;
     use actix_web_actors::ws;
+    use awc::Client;
     use diesel::{self, ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl};
     use futures::{SinkExt, StreamExt};
 
@@ -203,16 +208,15 @@ mod tests {
         let token = create_jwt(claim).unwrap();
         ws_conn
             .1
-            .send(ws::Message::Text(format!(
-                "/auth {{\"token\":\"{}\"}}",
-                token
-            )))
+            .send(ws::Message::Text(
+                format!("/auth {{\"token\":\"{}\"}}", token).into(),
+            ))
             .await
             .unwrap();
 
         let res = srv
             .post("/api/rounds/score")
-            .set_header("Authorization", token)
+            .append_header(("Authorization", token))
             .send_json(&Params {
                 answers: vec![
                     Answer {

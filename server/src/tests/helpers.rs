@@ -5,7 +5,15 @@ pub mod tests {
     use actix::Actor;
     use actix_http::Request;
     use actix_service::Service;
-    use actix_web::{body::Body, dev::ServiceResponse, error::Error, test, App};
+    use actix_test;
+    use actix_web::{
+        body::{BoxBody, EitherBody},
+        dev::ServiceResponse,
+        error::Error,
+        test,
+        web::Data,
+        App,
+    };
     use actix_web_actors::ws;
     use serde::{de::DeserializeOwned, Deserialize, Serialize};
     use serde_json;
@@ -26,23 +34,23 @@ pub mod tests {
     }
 
     pub async fn get_service(
-    ) -> impl Service<Request = Request, Response = ServiceResponse<Body>, Error = Error> {
+    ) -> impl Service<Request, Response = ServiceResponse<EitherBody<BoxBody>>, Error = Error> {
         test::init_service(
             App::new()
                 .wrap(get_identity_service())
-                .data(db::new_pool())
-                .data(Server::new(db::new_pool()).start())
+                .app_data(Data::new(db::new_pool()))
+                .app_data(Data::new(Server::new(db::new_pool()).start()))
                 .configure(routes),
         )
         .await
     }
 
-    pub fn get_test_server() -> test::TestServer {
-        test::start(|| {
+    pub fn get_test_server() -> actix_test::TestServer {
+        actix_test::start(|| {
             App::new()
                 .wrap(get_identity_service())
-                .data(db::new_pool())
-                .data(Server::new(db::new_pool()).start())
+                .app_data(Data::new(db::new_pool()))
+                .app_data(Data::new(Server::new(db::new_pool()).start()))
                 .configure(routes)
         })
     }
@@ -55,7 +63,7 @@ pub mod tests {
         let mut app = get_service().await;
         let mut req = test::TestRequest::get().uri(route);
         if let Some(token) = token {
-            req = req.header("Authorization", token);
+            req = req.append_header(("Authorization", token));
         }
 
         let res = test::call_service(&mut app, req.to_request()).await;
@@ -87,7 +95,7 @@ pub mod tests {
 
         let mut req = test::TestRequest::post().set_json(&params).uri(route);
         if let Some(token) = token {
-            req = req.header("Authorization", token);
+            req = req.append_header(("Authorization", token));
         }
 
         let res = test::call_service(&mut app, req.to_request()).await;
